@@ -397,6 +397,152 @@ export type Database = {
         }
         Relationships: []
       }
+      payroll_items: {
+        Row: {
+          basic_salary: number
+          created_at: string
+          employee_id: string
+          gross_pay: number
+          housing_allowance: number | null
+          id: string
+          net_pay: number
+          nhif: number | null
+          nssf: number | null
+          other_allowances: number | null
+          other_deductions: number | null
+          paye: number | null
+          payroll_run_id: string
+          status: string | null
+          total_deductions: number | null
+          transport_allowance: number | null
+        }
+        Insert: {
+          basic_salary: number
+          created_at?: string
+          employee_id: string
+          gross_pay: number
+          housing_allowance?: number | null
+          id?: string
+          net_pay: number
+          nhif?: number | null
+          nssf?: number | null
+          other_allowances?: number | null
+          other_deductions?: number | null
+          paye?: number | null
+          payroll_run_id: string
+          status?: string | null
+          total_deductions?: number | null
+          transport_allowance?: number | null
+        }
+        Update: {
+          basic_salary?: number
+          created_at?: string
+          employee_id?: string
+          gross_pay?: number
+          housing_allowance?: number | null
+          id?: string
+          net_pay?: number
+          nhif?: number | null
+          nssf?: number | null
+          other_allowances?: number | null
+          other_deductions?: number | null
+          paye?: number | null
+          payroll_run_id?: string
+          status?: string | null
+          total_deductions?: number | null
+          transport_allowance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_items_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_items_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_runs: {
+        Row: {
+          created_at: string
+          currency: string | null
+          employee_count: number | null
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          pay_period_end: string
+          pay_period_start: string
+          payment_date: string
+          run_number: string
+          status: string | null
+          total_deductions: number | null
+          total_gross: number | null
+          total_net: number | null
+          total_nhif: number | null
+          total_nssf: number | null
+          total_paye: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          employee_count?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          pay_period_end: string
+          pay_period_start: string
+          payment_date: string
+          run_number: string
+          status?: string | null
+          total_deductions?: number | null
+          total_gross?: number | null
+          total_net?: number | null
+          total_nhif?: number | null
+          total_nssf?: number | null
+          total_paye?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          employee_count?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          pay_period_end?: string
+          pay_period_start?: string
+          payment_date?: string
+          run_number?: string
+          status?: string | null
+          total_deductions?: number | null
+          total_gross?: number | null
+          total_net?: number | null
+          total_nhif?: number | null
+          total_nssf?: number | null
+          total_paye?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
