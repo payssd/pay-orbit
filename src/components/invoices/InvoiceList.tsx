@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Search, Plus, MoreHorizontal, Eye, Trash2, FileText, Loader2, Send, CheckCircle, Download } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Eye, Trash2, FileText, Loader2, Send, CheckCircle, Download, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Invoice, InvoiceWithItems } from '@/hooks/useInvoices';
 
@@ -18,13 +18,15 @@ interface InvoiceListProps {
   onDelete: (id: string) => Promise<boolean>;
   onUpdateStatus: (id: string, status: string) => Promise<any>;
   onDownloadPdf: (invoice: Invoice) => Promise<void>;
+  onSendEmail: (invoice: Invoice) => Promise<void>;
 }
 
-export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, onUpdateStatus, onDownloadPdf }: InvoiceListProps) {
+export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, onUpdateStatus, onDownloadPdf, onSendEmail }: InvoiceListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
 
   const filteredInvoices = invoices.filter((inv) => {
     const search = searchQuery.toLowerCase();
@@ -48,6 +50,15 @@ export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, o
       await onDownloadPdf(invoice);
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleSendEmail = async (invoice: Invoice) => {
+    setSendingEmailId(invoice.id);
+    try {
+      await onSendEmail(invoice);
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
@@ -169,6 +180,20 @@ export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, o
                               )}
                               Download PDF
                             </DropdownMenuItem>
+                            {invoice.customer_email && (
+                              <DropdownMenuItem 
+                                onClick={() => handleSendEmail(invoice)} 
+                                disabled={sendingEmailId === invoice.id}
+                              >
+                                {sendingEmailId === invoice.id ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Mail className="h-4 w-4 mr-2" />
+                                )}
+                                Send Email
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
                             {invoice.status === 'draft' && (
                               <DropdownMenuItem onClick={() => onUpdateStatus(invoice.id, 'sent')}>
                                 <Send className="h-4 w-4 mr-2" />
@@ -181,6 +206,7 @@ export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, o
                                 Mark as Paid
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setDeleteId(invoice.id)} className="text-destructive focus:text-destructive">
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete

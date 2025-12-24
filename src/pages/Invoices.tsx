@@ -5,11 +5,14 @@ import { useInvoices, type Invoice } from '@/hooks/useInvoices';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useAuth } from '@/contexts/AuthContext';
 import { downloadInvoicePdf } from '@/lib/invoicePdf';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Invoices() {
-  const { invoices, isLoading, createInvoice, updateInvoice, deleteInvoice, getInvoiceWithItems } = useInvoices();
+  const { invoices, isLoading, createInvoice, updateInvoice, deleteInvoice, getInvoiceWithItems, refetch } = useInvoices();
   const { customers } = useCustomers();
   const { currentOrganization } = useAuth();
+  const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,6 +51,37 @@ export default function Invoices() {
     }
   };
 
+  const handleSendEmail = async (invoice: Invoice) => {
+    if (!currentOrganization || !invoice.customer_email) {
+      toast({ title: 'Error', description: 'Customer email is required to send invoice', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          invoiceId: invoice.id,
+          recipientEmail: invoice.customer_email,
+          recipientName: invoice.customer_name || 'Customer',
+          senderName: currentOrganization.name,
+          senderEmail: currentOrganization.email,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({ title: 'Success', description: `Invoice sent to ${invoice.customer_email}` });
+      refetch(); // Refresh to show updated status
+    } catch (err: any) {
+      console.error('Error sending invoice email:', err);
+      toast({ 
+        title: 'Error', 
+        description: err.message || 'Failed to send invoice email', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 page-transition">
       <div>
@@ -63,6 +97,7 @@ export default function Invoices() {
         onDelete={deleteInvoice}
         onUpdateStatus={handleUpdateStatus}
         onDownloadPdf={handleDownloadPdf}
+        onSendEmail={handleSendEmail}
       />
 
       <InvoiceForm
