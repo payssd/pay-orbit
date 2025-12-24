@@ -9,6 +9,8 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   phone: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface Organization {
@@ -20,6 +22,8 @@ interface Organization {
   logo_url: string | null;
   subscription_status: 'active' | 'inactive' | 'cancelled' | 'past_due' | 'trialing';
   subscription_plan: 'starter' | 'growth' | 'pro' | null;
+  subscription_ends_at: string | null;
+  subscription_started_at: string | null;
 }
 
 interface OrganizationMember {
@@ -43,6 +47,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   setCurrentOrganization: (org: Organization) => void;
   refreshOrganizations: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   createOrganization: (data: { name: string; email: string; phone?: string; country: string }) => Promise<{ data: Organization | null; error: Error | null }>;
 }
 
@@ -119,6 +124,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentMembership(membership);
     }
   }, [user, currentOrganization, fetchOrganizations]);
+
+  const refreshProfile = useCallback(async () => {
+    if (!user) return;
+    const profileData = await fetchProfile(user.id);
+    setProfile(profileData);
+  }, [user, fetchProfile]);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -307,6 +318,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     setCurrentOrganization: handleSetCurrentOrganization,
     refreshOrganizations,
+    refreshProfile,
     createOrganization,
   };
 
