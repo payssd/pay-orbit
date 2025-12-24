@@ -5,8 +5,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Check, Sparkles, Zap, Crown, ArrowRight, Loader2 } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
+// These should match your Paystack plan codes exactly
+// Create these plans in your Paystack dashboard first
 const plans = [
   {
     id: 'starter',
@@ -15,6 +18,8 @@ const plans = [
     price: { monthly: 2500, yearly: 25000 },
     currency: 'KES',
     icon: Zap,
+    // Replace with your actual Paystack plan codes
+    planCode: { monthly: 'PLN_starter_monthly', yearly: 'PLN_starter_yearly' },
     features: [
       'Up to 10 employees',
       'Unlimited invoices',
@@ -31,6 +36,7 @@ const plans = [
     price: { monthly: 7500, yearly: 75000 },
     currency: 'KES',
     icon: Sparkles,
+    planCode: { monthly: 'PLN_growth_monthly', yearly: 'PLN_growth_yearly' },
     features: [
       'Up to 50 employees',
       'Unlimited invoices',
@@ -49,6 +55,7 @@ const plans = [
     price: { monthly: 15000, yearly: 150000 },
     currency: 'KES',
     icon: Crown,
+    planCode: { monthly: 'PLN_pro_monthly', yearly: 'PLN_pro_yearly' },
     features: [
       'Unlimited employees',
       'Unlimited invoices',
@@ -65,8 +72,9 @@ const plans = [
 ];
 
 export default function Subscription() {
-  const { user, currentOrganization } = useAuth();
+  const { user, currentOrganization, refreshOrganizations } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
@@ -75,18 +83,83 @@ export default function Subscription() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleSelectPlan = async (planId: string) => {
-    setIsLoading(planId);
-    
-    // TODO: Integrate with Paystack when API key is added
-    toast({
-      title: 'Coming soon',
-      description: 'Payment integration is being set up. For now, you have free access!',
-    });
-    
-    setTimeout(() => {
+  const handleSelectPlan = async (plan: typeof plans[0]) => {
+    if (!currentOrganization || !user) {
+      toast({
+        title: 'Not authenticated',
+        description: 'Please log in and create an organization first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(plan.id);
+
+    try {
+      const planCode = plan.planCode[billingPeriod];
+      
+      const { data, error } = await supabase.functions.invoke('paystack-initialize', {
+        body: {
+          organizationId: currentOrganization.id,
+          planCode: planCode,
+          email: currentOrganization.email,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.authorization_url) {
+        // Redirect to Paystack checkout
+        window.location.href = data.authorization_url;
+      } else if (data?.error) {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      console.error('Subscription error:', error);
+      toast({
+        title: 'Subscription failed',
+        description: error.message || 'Failed to initialize subscription. Please try again.',
+        variant: 'destructive',
+      });
       setIsLoading(null);
-    }, 1000);
+    }
+  };
+
+  const handleSkipForNow = async () => {
+    // For demo purposes, activate with trialing status
+    if (currentOrganization) {
+      try {
+        const { error } = await supabase
+          .from('organizations')
+          .update({
+            subscription_status: 'trialing',
+            subscription_plan: 'starter',
+            subscription_started_at: new Date().toISOString(),
+            subscription_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          })
+          .eq('id', currentOrganization.id);
+
+        if (error) throw error;
+
+        await refreshOrganizations();
+        
+        toast({
+          title: '14-day trial activated!',
+          description: 'You have full access to try all features.',
+        });
+        
+        navigate('/dashboard');
+      } catch (error: any) {
+        console.error('Trial activation error:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to activate trial. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -187,7 +260,7 @@ export default function Subscription() {
                 <Button
                   className="w-full"
                   variant={plan.popular ? 'default' : 'outline'}
-                  onClick={() => handleSelectPlan(plan.id)}
+                  onClick={() => handleSelectPlan(plan)}
                   disabled={isLoading !== null}
                 >
                   {isLoading === plan.id ? (
@@ -219,8 +292,12 @@ export default function Subscription() {
 
         {/* Skip for now (demo mode) */}
         <div className="mt-8 text-center">
-          <Button variant="ghost" asChild className="text-muted-foreground">
-            <a href="/dashboard">Skip for now (demo mode)</a>
+          <Button 
+            variant="ghost" 
+            className="text-muted-foreground"
+            onClick={handleSkipForNow}
+          >
+            Start 14-day free trial instead
           </Button>
         </div>
 

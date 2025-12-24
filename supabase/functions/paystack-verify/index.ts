@@ -1,0 +1,118 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY');
+    if (!paystackSecretKey) {
+      console.error('PAYSTACK_SECRET_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'Payment service not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get reference from query params
+    const url = new URL(req.url);
+    const reference = url.searchParams.get('reference');
+
+    if (!reference) {
+      return new Response(
+        JSON.stringify({ error: 'Missing reference parameter' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Verifying transaction reference:', reference);
+
+    // Verify transaction with Paystack
+    const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${paystackSecretKey}`,
+      },
+    });
+
+    const verifyData = await verifyResponse.json();
+    console.log('Verification response:', verifyData);
+
+    if (!verifyData.status) {
+      return new Response(
+        JSON.stringify({ error: verifyData.message || 'Verification failed' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { status, metadata, plan } = verifyData.data;
+    const organizationId = metadata?.organization_id;
+
+    if (status !== 'success') {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          status,
+          message: 'Transaction was not successful' 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Update organization subscription if we have the org ID
+    if (organizationId) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Determine plan from metadata or plan object
+      const planCode = metadata?.plan_code || plan?.plan_code || '';
+      let subscriptionPlan = null;
+      if (planCode.toLowerCase().includes('starter')) subscriptionPlan = 'starter';
+      else if (planCode.toLowerCase().includes('growth')) subscriptionPlan = 'growth';
+      else if (planCode.toLowerCase().includes('pro')) subscriptionPlan = 'pro';
+
+      console.log('Updating organization:', organizationId, 'with plan:', subscriptionPlan);
+
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({
+          subscription_status: 'active',
+          subscription_plan: subscriptionPlan,
+          subscription_started_at: new Date().toISOString(),
+          subscription_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .eq('id', organizationId);
+
+      if (updateError) {
+        console.error('Failed to update organization:', updateError);
+      } else {
+        console.log('Successfully updated organization subscription');
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        status: 'success',
+        organization_id: organizationId,
+        plan: metadata?.plan_code || plan?.plan_code,
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Verification error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
