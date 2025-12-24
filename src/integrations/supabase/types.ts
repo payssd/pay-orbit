@@ -183,6 +183,65 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string
+          currency: string | null
+          description: string
+          expense_date: string
+          id: string
+          notes: string | null
+          organization_id: string
+          receipt_url: string | null
+          status: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by: string
+          currency?: string | null
+          description: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string
+          currency?: string | null
+          description?: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           amount: number
@@ -396,6 +455,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          bank_account_name: string | null
+          bank_account_number: string | null
+          bank_branch: string | null
+          bank_enabled: boolean | null
+          bank_name: string | null
+          bank_swift_code: string | null
+          created_at: string
+          id: string
+          mpesa_account_name: string | null
+          mpesa_business_shortcode: string | null
+          mpesa_enabled: boolean | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_enabled?: boolean | null
+          bank_name?: string | null
+          bank_swift_code?: string | null
+          created_at?: string
+          id?: string
+          mpesa_account_name?: string | null
+          mpesa_business_shortcode?: string | null
+          mpesa_enabled?: boolean | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_enabled?: boolean | null
+          bank_name?: string | null
+          bank_swift_code?: string | null
+          created_at?: string
+          id?: string
+          mpesa_account_name?: string | null
+          mpesa_business_shortcode?: string | null
+          mpesa_enabled?: boolean | null
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payroll_items: {
         Row: {

@@ -18,6 +18,8 @@ import PayrollRuns from "./pages/PayrollRuns";
 import Customers from "./pages/Customers";
 import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
+import Expenses from "./pages/Expenses";
+import PaymentSettings from "./pages/PaymentSettings";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import TeamSettings from "./pages/TeamSettings";
 import ProfileSettings from "./pages/ProfileSettings";
@@ -62,6 +64,9 @@ const App = () => (
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/invoices/:id" element={<Invoices />} />
               
+              {/* Expenses */}
+              <Route path="/expenses" element={<Expenses />} />
+              
               {/* Reports */}
               <Route path="/reports" element={<Reports />} />
               <Route path="/reports/payroll" element={<Reports />} />
@@ -69,7 +74,7 @@ const App = () => (
               
               {/* Settings */}
               <Route path="/settings/organization" element={<OrganizationSettings />} />
-              <Route path="/settings/gateways" element={<PlaceholderPage title="Payment Gateways" />} />
+              <Route path="/settings/gateways" element={<PaymentSettings />} />
               <Route path="/settings/subscription" element={<Subscription />} />
               <Route path="/settings/team" element={<TeamSettings />} />
               <Route path="/settings/profile" element={<ProfileSettings />} />
@@ -86,15 +91,5 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
-
-// Placeholder component for routes to be implemented
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="page-transition">
-      <h1 className="text-3xl font-bold mb-2">{title}</h1>
-      <p className="text-muted-foreground">This page is coming soon in the next phase.</p>
-    </div>
-  );
-}
 
 export default App;
