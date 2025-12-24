@@ -38,6 +38,7 @@ const navigation = [
   { name: 'Payroll Runs', href: '/payroll/runs', icon: Wallet },
   { name: 'Customers', href: '/customers', icon: Building2 },
   { name: 'Invoices', href: '/invoices', icon: FileText },
+  { name: 'Expenses', href: '/expenses', icon: Receipt },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
 ];
 

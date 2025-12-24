@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -12,18 +13,23 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
+  Receipt,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
 export default function Dashboard() {
   const { profile, currentOrganization } = useAuth();
+  const { data: stats, isLoading } = useDashboardStats();
 
-  const stats = [
+  const statCards = [
     {
       name: 'Total Employees',
-      value: '0',
-      change: '+0%',
-      changeType: 'neutral' as 'neutral' | 'increase' | 'decrease',
+      value: stats?.employeeCount?.toString() || '0',
+      change: stats?.employeeChange ? `${stats.employeeChange > 0 ? '+' : ''}${stats.employeeChange}%` : '+0%',
+      changeType: (stats?.employeeChange || 0) >= 0 ? 'increase' : 'decrease',
       icon: Users,
       href: '/payroll/employees',
       color: 'text-info',
@@ -31,9 +37,9 @@ export default function Dashboard() {
     },
     {
       name: 'Pending Invoices',
-      value: '0',
-      change: 'KES 0',
-      changeType: 'neutral' as 'neutral' | 'increase' | 'decrease',
+      value: stats?.pendingInvoicesCount?.toString() || '0',
+      change: `KES ${(stats?.pendingInvoicesAmount || 0).toLocaleString()}`,
+      changeType: 'neutral',
       icon: FileText,
       href: '/invoices',
       color: 'text-warning',
@@ -41,9 +47,9 @@ export default function Dashboard() {
     },
     {
       name: 'This Month Payroll',
-      value: 'KES 0',
-      change: '+0%',
-      changeType: 'neutral' as 'neutral' | 'increase' | 'decrease',
+      value: `KES ${(stats?.thisMonthPayroll || 0).toLocaleString()}`,
+      change: stats?.payrollChange ? `${stats.payrollChange > 0 ? '+' : ''}${stats.payrollChange}%` : '+0%',
+      changeType: (stats?.payrollChange || 0) >= 0 ? 'increase' : 'decrease',
       icon: Wallet,
       href: '/payroll/runs',
       color: 'text-primary',
@@ -51,9 +57,9 @@ export default function Dashboard() {
     },
     {
       name: 'Revenue (Paid)',
-      value: 'KES 0',
-      change: '+0%',
-      changeType: 'neutral' as 'neutral' | 'increase' | 'decrease',
+      value: `KES ${(stats?.paidRevenueThisMonth || 0).toLocaleString()}`,
+      change: stats?.revenueChange ? `${stats.revenueChange > 0 ? '+' : ''}${stats.revenueChange}%` : '+0%',
+      changeType: (stats?.revenueChange || 0) >= 0 ? 'increase' : 'decrease',
       icon: TrendingUp,
       href: '/reports/invoices',
       color: 'text-success',
@@ -65,9 +71,8 @@ export default function Dashboard() {
     { name: 'Add Employee', href: '/payroll/employees/new', icon: Users },
     { name: 'Create Invoice', href: '/invoices/new', icon: FileText },
     { name: 'Run Payroll', href: '/payroll/runs/new', icon: Wallet },
+    { name: 'Add Expense', href: '/expenses', icon: Receipt },
   ];
-
-  const recentActivity: { title: string; description: string; time: string; status: 'success' | 'warning' | 'info' }[] = [];
 
   const getStatusIcon = (status: 'success' | 'warning' | 'info') => {
     switch (status) {
@@ -92,7 +97,7 @@ export default function Dashboard() {
             Here's what's happening with {currentOrganization?.name} today.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {quickActions.map((action) => (
             <Button key={action.name} variant="outline" asChild className="gap-2">
               <Link to={action.href}>
@@ -106,7 +111,7 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statCards.map((stat) => (
           <Link key={stat.name} to={stat.href}>
             <Card className="stat-card hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-card">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -137,12 +142,95 @@ export default function Dashboard() {
                   >
                     {stat.change}
                   </span>
-                  <span className="text-xs text-muted-foreground">vs last month</span>
+                  {stat.changeType !== 'neutral' && (
+                    <span className="text-xs text-muted-foreground">vs last month</span>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </Link>
         ))}
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Revenue vs Expenses Chart */}
+        <Card className="border-0 shadow-card">
+          <CardHeader>
+            <CardTitle>Revenue vs Expenses</CardTitle>
+            <CardDescription>Last 6 months comparison</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats?.monthlyRevenue && stats.monthlyRevenue.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={stats.monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="month" className="text-xs" />
+                  <YAxis className="text-xs" tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
+                  <Tooltip 
+                    formatter={(value: number) => [`KES ${value.toLocaleString()}`, '']}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                  />
+                  <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" name="Expenses" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[250px] text-center">
+                <TrendingUp className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <p className="text-sm font-medium">No data yet</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Create invoices and record expenses to see trends
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Expenses by Category */}
+        <Card className="border-0 shadow-card">
+          <CardHeader>
+            <CardTitle>Expenses by Category</CardTitle>
+            <CardDescription>This month's breakdown</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats?.expensesByCategory && stats.expensesByCategory.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={stats.expensesByCategory}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    labelLine={false}
+                  >
+                    {stats.expensesByCategory.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [`KES ${value.toLocaleString()}`, '']}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[250px] text-center">
+                <Receipt className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <p className="text-sm font-medium">No expenses this month</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  <Link to="/expenses" className="text-primary hover:underline">
+                    Start tracking expenses
+                  </Link>
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Content Grid */}
@@ -154,9 +242,9 @@ export default function Dashboard() {
             <CardDescription>Latest actions in your organization</CardDescription>
           </CardHeader>
           <CardContent>
-            {recentActivity.length > 0 ? (
+            {stats?.recentActivity && stats.recentActivity.length > 0 ? (
               <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
+                {stats.recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-start gap-3">
                     {getStatusIcon(activity.status)}
                     <div className="flex-1 min-w-0">
@@ -190,10 +278,10 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               {[
-                { title: 'Add your first employee', description: 'Set up employee profiles for payroll', href: '/payroll/employees/new', done: false },
-                { title: 'Connect a payment gateway', description: 'Link your Paystack or Flutterwave account', href: '/settings/gateways', done: false },
-                { title: 'Create your first invoice', description: 'Send professional invoices to customers', href: '/invoices/new', done: false },
-                { title: 'Run your first payroll', description: 'Calculate and process employee salaries', href: '/payroll/runs/new', done: false },
+                { title: 'Add your first employee', description: 'Set up employee profiles for payroll', href: '/payroll/employees', done: (stats?.employeeCount || 0) > 0 },
+                { title: 'Connect a payment gateway', description: 'Link your M-Pesa or bank account', href: '/settings/gateways', done: false },
+                { title: 'Create your first invoice', description: 'Send professional invoices to customers', href: '/invoices', done: false },
+                { title: 'Track your expenses', description: 'Record and categorize business expenses', href: '/expenses', done: (stats?.expensesByCategory?.length || 0) > 0 },
               ].map((step, index) => (
                 <Link
                   key={index}
