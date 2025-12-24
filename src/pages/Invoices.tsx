@@ -3,10 +3,13 @@ import { InvoiceList } from '@/components/invoices/InvoiceList';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { useInvoices, type Invoice } from '@/hooks/useInvoices';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useAuth } from '@/contexts/AuthContext';
+import { downloadInvoicePdf } from '@/lib/invoicePdf';
 
 export default function Invoices() {
-  const { invoices, isLoading, createInvoice, updateInvoice, deleteInvoice } = useInvoices();
+  const { invoices, isLoading, createInvoice, updateInvoice, deleteInvoice, getInvoiceWithItems } = useInvoices();
   const { customers } = useCustomers();
+  const { currentOrganization } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,6 +35,19 @@ export default function Invoices() {
     return await updateInvoice(id, { status: status as any });
   };
 
+  const handleDownloadPdf = async (invoice: Invoice) => {
+    if (!currentOrganization) return;
+    const fullInvoice = await getInvoiceWithItems(invoice.id);
+    if (fullInvoice) {
+      downloadInvoicePdf(fullInvoice, {
+        name: currentOrganization.name,
+        email: currentOrganization.email,
+        phone: currentOrganization.phone,
+        country: currentOrganization.country,
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 page-transition">
       <div>
@@ -46,6 +62,7 @@ export default function Invoices() {
         onView={handleView}
         onDelete={deleteInvoice}
         onUpdateStatus={handleUpdateStatus}
+        onDownloadPdf={handleDownloadPdf}
       />
 
       <InvoiceForm

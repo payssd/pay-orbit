@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Search, Plus, MoreHorizontal, Eye, Trash2, FileText, Loader2, Send, CheckCircle } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Eye, Trash2, FileText, Loader2, Send, CheckCircle, Download } from 'lucide-react';
 import { format } from 'date-fns';
-import type { Invoice } from '@/hooks/useInvoices';
+import type { Invoice, InvoiceWithItems } from '@/hooks/useInvoices';
 
 interface InvoiceListProps {
   invoices: Invoice[];
@@ -17,12 +17,14 @@ interface InvoiceListProps {
   onView: (invoice: Invoice) => void;
   onDelete: (id: string) => Promise<boolean>;
   onUpdateStatus: (id: string, status: string) => Promise<any>;
+  onDownloadPdf: (invoice: Invoice) => Promise<void>;
 }
 
-export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, onUpdateStatus }: InvoiceListProps) {
+export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, onUpdateStatus, onDownloadPdf }: InvoiceListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const filteredInvoices = invoices.filter((inv) => {
     const search = searchQuery.toLowerCase();
@@ -38,6 +40,15 @@ export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, o
     await onDelete(deleteId);
     setIsDeleting(false);
     setDeleteId(null);
+  };
+
+  const handleDownloadPdf = async (invoice: Invoice) => {
+    setDownloadingId(invoice.id);
+    try {
+      await onDownloadPdf(invoice);
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const formatCurrency = (amount: number | null) => {
@@ -149,6 +160,14 @@ export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, o
                             <DropdownMenuItem onClick={() => onView(invoice)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDownloadPdf(invoice)} disabled={downloadingId === invoice.id}>
+                              {downloadingId === invoice.id ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4 mr-2" />
+                              )}
+                              Download PDF
                             </DropdownMenuItem>
                             {invoice.status === 'draft' && (
                               <DropdownMenuItem onClick={() => onUpdateStatus(invoice.id, 'sent')}>
