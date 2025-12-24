@@ -18,8 +18,7 @@ const plans = [
     price: { monthly: 2500, yearly: 25000 },
     currency: 'KES',
     icon: Zap,
-    // Replace with your actual Paystack plan codes
-    planCode: { monthly: 'PLN_starter_monthly', yearly: 'PLN_starter_yearly' },
+    planCode: 'PLN_04faggvrzaef1nv',
     features: [
       'Up to 10 employees',
       'Unlimited invoices',
@@ -36,7 +35,7 @@ const plans = [
     price: { monthly: 7500, yearly: 75000 },
     currency: 'KES',
     icon: Sparkles,
-    planCode: { monthly: 'PLN_growth_monthly', yearly: 'PLN_growth_yearly' },
+    planCode: 'PLN_h812vb0ofzt1n20',
     features: [
       'Up to 50 employees',
       'Unlimited invoices',
@@ -52,10 +51,10 @@ const plans = [
     id: 'pro',
     name: 'Pro',
     description: 'For enterprises with advanced needs',
-    price: { monthly: 15000, yearly: 150000 },
+    price: { monthly: 0, yearly: 0 },
     currency: 'KES',
     icon: Crown,
-    planCode: { monthly: 'PLN_pro_monthly', yearly: 'PLN_pro_yearly' },
+    planCode: null, // Custom pricing - contact sales
     features: [
       'Unlimited employees',
       'Unlimited invoices',
@@ -68,6 +67,7 @@ const plans = [
       'Audit logs',
     ],
     popular: false,
+    isCustom: true,
   },
 ];
 
@@ -84,6 +84,12 @@ export default function Subscription() {
   }
 
   const handleSelectPlan = async (plan: typeof plans[0]) => {
+    // Handle custom pricing (Pro plan)
+    if ('isCustom' in plan && plan.isCustom) {
+      window.location.href = 'mailto:sales@payflow.africa?subject=Pro Plan Inquiry';
+      return;
+    }
+
     if (!currentOrganization || !user) {
       toast({
         title: 'Not authenticated',
@@ -93,15 +99,22 @@ export default function Subscription() {
       return;
     }
 
+    if (!plan.planCode) {
+      toast({
+        title: 'Plan not available',
+        description: 'This plan requires custom pricing. Please contact sales.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(plan.id);
 
     try {
-      const planCode = plan.planCode[billingPeriod];
-      
       const { data, error } = await supabase.functions.invoke('paystack-initialize', {
         body: {
           organizationId: currentOrganization.id,
-          planCode: planCode,
+          planCode: plan.planCode,
           email: currentOrganization.email,
         },
       });
@@ -238,12 +251,18 @@ export default function Subscription() {
 
               <CardContent className="text-center pb-6">
                 <div className="mb-6">
-                  <span className="text-4xl font-bold">
-                    {formatPrice(plan.price[billingPeriod])}
-                  </span>
-                  <span className="text-muted-foreground">
-                    /{billingPeriod === 'monthly' ? 'month' : 'year'}
-                  </span>
+                  {'isCustom' in plan && plan.isCustom ? (
+                    <span className="text-4xl font-bold">Custom</span>
+                  ) : (
+                    <>
+                      <span className="text-4xl font-bold">
+                        {formatPrice(plan.price[billingPeriod])}
+                      </span>
+                      <span className="text-muted-foreground">
+                        /{billingPeriod === 'monthly' ? 'month' : 'year'}
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 <ul className="space-y-3 text-left">
@@ -265,6 +284,8 @@ export default function Subscription() {
                 >
                   {isLoading === plan.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : 'isCustom' in plan && plan.isCustom ? (
+                    'Contact Sales'
                   ) : (
                     <>
                       Get Started
