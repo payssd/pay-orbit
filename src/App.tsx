@@ -17,6 +17,7 @@ import Employees from "./pages/Employees";
 import PayrollRuns from "./pages/PayrollRuns";
 import Customers from "./pages/Customers";
 import Invoices from "./pages/Invoices";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,10 +59,10 @@ const App = () => (
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/invoices/:id" element={<Invoices />} />
               
-              {/* Reports - placeholders */}
-              <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
-              <Route path="/reports/payroll" element={<PlaceholderPage title="Payroll Reports" />} />
-              <Route path="/reports/invoices" element={<PlaceholderPage title="Invoice Reports" />} />
+              {/* Reports */}
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/reports/payroll" element={<Reports />} />
+              <Route path="/reports/invoices" element={<Reports />} />
               
               {/* Settings - placeholders */}
               <Route path="/settings/organization" element={<PlaceholderPage title="Organization Settings" />} />
