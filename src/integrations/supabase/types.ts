@@ -14,6 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
+      employees: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          bank_account_number: string | null
+          bank_branch: string | null
+          bank_name: string | null
+          base_salary: number | null
+          city: string | null
+          country: string | null
+          created_at: string
+          currency: string | null
+          date_of_birth: string | null
+          department: string | null
+          email: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          employee_number: string | null
+          employment_type: string | null
+          first_name: string
+          hire_date: string | null
+          id: string
+          job_title: string | null
+          last_name: string
+          national_id: string | null
+          notes: string | null
+          organization_id: string
+          phone: string | null
+          status: string | null
+          tax_pin: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          base_salary?: number | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          date_of_birth?: string | null
+          department?: string | null
+          email: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_number?: string | null
+          employment_type?: string | null
+          first_name: string
+          hire_date?: string | null
+          id?: string
+          job_title?: string | null
+          last_name: string
+          national_id?: string | null
+          notes?: string | null
+          organization_id: string
+          phone?: string | null
+          status?: string | null
+          tax_pin?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          base_salary?: number | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          date_of_birth?: string | null
+          department?: string | null
+          email?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_number?: string | null
+          employment_type?: string | null
+          first_name?: string
+          hire_date?: string | null
+          id?: string
+          job_title?: string | null
+          last_name?: string
+          national_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          phone?: string | null
+          status?: string | null
+          tax_pin?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
