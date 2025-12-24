@@ -13,6 +13,7 @@ import Onboarding from "./pages/Onboarding";
 import Subscription from "./pages/Subscription";
 import SubscriptionCallback from "./pages/SubscriptionCallback";
 import Dashboard from "./pages/Dashboard";
+import Employees from "./pages/Employees";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,8 +45,8 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               
               {/* Payroll routes - placeholders */}
-              <Route path="/payroll/employees" element={<PlaceholderPage title="Employees" />} />
-              <Route path="/payroll/employees/new" element={<PlaceholderPage title="Add Employee" />} />
+              <Route path="/payroll/employees" element={<Employees />} />
+              <Route path="/payroll/employees/:id" element={<Employees />} />
               <Route path="/payroll/runs" element={<PlaceholderPage title="Payroll Runs" />} />
               <Route path="/payroll/runs/new" element={<PlaceholderPage title="New Payroll Run" />} />
               
