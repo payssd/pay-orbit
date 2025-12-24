@@ -11,6 +11,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Subscription from "./pages/Subscription";
+import SubscriptionCallback from "./pages/SubscriptionCallback";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
@@ -30,6 +31,7 @@ const App = () => (
             {/* Semi-protected routes (need auth but not org) */}
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/subscription" element={<Subscription />} />
+            <Route path="/subscription/callback" element={<SubscriptionCallback />} />
             
             {/* Protected routes with dashboard layout */}
             <Route
