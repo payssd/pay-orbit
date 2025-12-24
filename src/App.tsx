@@ -18,6 +18,9 @@ import PayrollRuns from "./pages/PayrollRuns";
 import Customers from "./pages/Customers";
 import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
+import OrganizationSettings from "./pages/OrganizationSettings";
+import TeamSettings from "./pages/TeamSettings";
+import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,12 +67,12 @@ const App = () => (
               <Route path="/reports/payroll" element={<Reports />} />
               <Route path="/reports/invoices" element={<Reports />} />
               
-              {/* Settings - placeholders */}
-              <Route path="/settings/organization" element={<PlaceholderPage title="Organization Settings" />} />
+              {/* Settings */}
+              <Route path="/settings/organization" element={<OrganizationSettings />} />
               <Route path="/settings/gateways" element={<PlaceholderPage title="Payment Gateways" />} />
-              <Route path="/settings/subscription" element={<PlaceholderPage title="Subscription" />} />
-              <Route path="/settings/team" element={<PlaceholderPage title="Team Members" />} />
-              <Route path="/settings/profile" element={<PlaceholderPage title="Profile" />} />
+              <Route path="/settings/subscription" element={<Subscription />} />
+              <Route path="/settings/team" element={<TeamSettings />} />
+              <Route path="/settings/profile" element={<ProfileSettings />} />
             </Route>
             
             {/* Redirect root to dashboard or auth */}
