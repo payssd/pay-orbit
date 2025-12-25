@@ -1,7 +1,7 @@
 project_id = "rtokrinjgtlawspafznl"
 
 [functions.paystack-initialize]
-verify_jwt = true
+verify_jwt = false
 
 [functions.paystack-webhook]
 verify_jwt = false
