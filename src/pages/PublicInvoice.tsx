@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Building2, Download, Smartphone, Landmark, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { FileText, Building2, Download, Smartphone, Landmark, AlertCircle, CheckCircle2, Clock, CreditCard, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface InvoiceData {
   invoice: {
@@ -54,17 +55,30 @@ interface InvoiceData {
       swift_code: string;
     } | null;
   };
+  onlinePayment: {
+    paystack: boolean;
+    flutterwave: boolean;
+  };
 }
 
 export default function PublicInvoice() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const [data, setData] = useState<InvoiceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (token) {
       fetchInvoice();
+    }
+    
+    // Check for payment success/error in URL params
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      toast({ title: 'Payment Successful', description: 'Thank you for your payment!' });
     }
   }, [token]);
 
@@ -121,6 +135,7 @@ export default function PublicInvoice() {
       sent: { variant: 'secondary', icon: <Clock className="h-3 w-3" />, label: 'Awaiting Payment' },
       overdue: { variant: 'destructive', icon: <AlertCircle className="h-3 w-3" />, label: 'Overdue' },
       draft: { variant: 'outline', icon: <FileText className="h-3 w-3" />, label: 'Draft' },
+      partial: { variant: 'secondary', icon: <Clock className="h-3 w-3" />, label: 'Partially Paid' },
     };
     const config = statusConfig[status] || statusConfig.draft;
     return (
@@ -129,6 +144,42 @@ export default function PublicInvoice() {
         {config.label}
       </Badge>
     );
+  };
+
+  const handleOnlinePayment = async (provider: 'paystack' | 'flutterwave') => {
+    if (!token) return;
+    
+    setPaymentLoading(provider);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/initialize-invoice-payment`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            invoiceToken: token,
+            provider,
+            callbackUrl: `${window.location.origin}/invoice/${token}?payment=success`,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to initialize payment');
+      }
+
+      // Redirect to payment page
+      window.location.href = result.paymentUrl;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to initialize payment';
+      toast({ title: 'Payment Error', description: message, variant: 'destructive' });
+    } finally {
+      setPaymentLoading(null);
+    }
   };
 
   if (isLoading) {
@@ -280,11 +331,55 @@ export default function PublicInvoice() {
           </CardContent>
         </Card>
 
-        {/* Payment Methods */}
+        {/* Online Payment Options */}
+        {(data.onlinePayment?.paystack || data.onlinePayment?.flutterwave) && balanceDue > 0 && (
+          <Card className="border-0 shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Pay Online
+              </CardTitle>
+              <CardDescription>Pay securely with your card or mobile money</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              {data.onlinePayment.paystack && (
+                <Button 
+                  onClick={() => handleOnlinePayment('paystack')}
+                  disabled={paymentLoading !== null}
+                  className="flex-1 min-w-[140px]"
+                >
+                  {paymentLoading === 'paystack' ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CreditCard className="h-4 w-4 mr-2" />
+                  )}
+                  Pay with Paystack
+                </Button>
+              )}
+              {data.onlinePayment.flutterwave && (
+                <Button 
+                  onClick={() => handleOnlinePayment('flutterwave')}
+                  disabled={paymentLoading !== null}
+                  variant="secondary"
+                  className="flex-1 min-w-[140px]"
+                >
+                  {paymentLoading === 'flutterwave' ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CreditCard className="h-4 w-4 mr-2" />
+                  )}
+                  Pay with Flutterwave
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Manual Payment Methods */}
         {(paymentMethods.mpesa || paymentMethods.bank) && balanceDue > 0 && (
           <Card className="border-0 shadow-card">
             <CardHeader>
-              <CardTitle className="text-lg">Payment Options</CardTitle>
+              <CardTitle className="text-lg">Manual Payment Options</CardTitle>
               <CardDescription>Choose your preferred payment method</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">

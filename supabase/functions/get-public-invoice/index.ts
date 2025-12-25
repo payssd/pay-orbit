@@ -53,6 +53,18 @@ serve(async (req: Request) => {
       .eq("organization_id", invoice.organization_id)
       .maybeSingle();
 
+    // Fetch gateway configs to check if online payment is available
+    const { data: gatewayConfigs } = await supabase
+      .from("payment_gateway_configs")
+      .select("provider, is_enabled")
+      .eq("organization_id", invoice.organization_id)
+      .eq("is_enabled", true);
+
+    const onlinePayment = {
+      paystack: gatewayConfigs?.some((c: any) => c.provider === 'paystack') || false,
+      flutterwave: gatewayConfigs?.some((c: any) => c.provider === 'flutterwave') || false,
+    };
+
     // Return invoice data (without sensitive organization data)
     return new Response(
       JSON.stringify({
@@ -101,6 +113,7 @@ serve(async (req: Request) => {
             swift_code: paymentSettings.bank_swift_code,
           } : null,
         },
+        onlinePayment,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
