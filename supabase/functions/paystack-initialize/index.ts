@@ -7,8 +7,9 @@ const corsHeaders = {
 
 interface InitializeRequest {
   organizationId: string;
-  planCode: string;
+  planCode?: string;
   email: string;
+  amount?: number; // Amount in base currency (e.g., KES)
 }
 
 Deno.serve(async (req) => {
@@ -60,11 +61,18 @@ Deno.serve(async (req) => {
     }
 
     const body: InitializeRequest = await req.json();
-    const { organizationId, planCode, email } = body;
+    const { organizationId, planCode, email, amount } = body;
 
-    if (!organizationId || !planCode || !email) {
+    if (!organizationId || !email) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: organizationId, planCode, email' }),
+        JSON.stringify({ error: 'Missing required fields: organizationId, email' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!planCode && !amount) {
+      return new Response(
+        JSON.stringify({ error: 'Either planCode or amount is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -146,9 +154,34 @@ Deno.serve(async (req) => {
         .eq('id', organizationId);
     }
 
-    // Initialize subscription transaction
+    // Initialize subscription/payment transaction
     const callbackUrl = `${req.headers.get('origin')}/subscription/callback`;
-    console.log('Initializing subscription with plan:', planCode, 'callback:', callbackUrl);
+    console.log('Initializing payment with plan:', planCode, 'amount:', amount, 'callback:', callbackUrl);
+
+    // Build request body - use plan if provided, otherwise use amount
+    const transactionBody: any = {
+      email,
+      callback_url: callbackUrl,
+      metadata: {
+        organization_id: organizationId,
+        plan_code: planCode || null,
+        custom_fields: [
+          {
+            display_name: 'Organization',
+            variable_name: 'organization',
+            value: org.name,
+          },
+        ],
+      },
+    };
+
+    // If plan exists, use it for subscription; otherwise use amount for one-time payment
+    if (planCode) {
+      transactionBody.plan = planCode;
+    }
+    if (amount) {
+      transactionBody.amount = Math.round(amount * 100); // Convert to kobo/cents
+    }
 
     const subscriptionResponse = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
@@ -156,30 +189,20 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${paystackSecretKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        email,
-        plan: planCode,
-        callback_url: callbackUrl,
-        metadata: {
-          organization_id: organizationId,
-          plan_code: planCode,
-          custom_fields: [
-            {
-              display_name: 'Organization',
-              variable_name: 'organization',
-              value: org.name,
-            },
-          ],
-        },
-      }),
+      body: JSON.stringify(transactionBody),
     });
 
     const subscriptionData = await subscriptionResponse.json();
-    console.log('Subscription init response:', subscriptionData);
+    console.log('Payment init response:', JSON.stringify(subscriptionData));
 
     if (!subscriptionData.status) {
+      // Provide more helpful error message
+      let errorMsg = subscriptionData.message || 'Failed to initialize payment';
+      if (errorMsg.includes('Invalid Amount') && planCode) {
+        errorMsg = `Plan "${planCode}" not found in Paystack. Please create the plan in your Paystack dashboard first, or contact support.`;
+      }
       return new Response(
-        JSON.stringify({ error: subscriptionData.message || 'Failed to initialize subscription' }),
+        JSON.stringify({ error: errorMsg }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

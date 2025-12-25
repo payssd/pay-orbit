@@ -116,6 +116,7 @@ export default function Subscription() {
           organizationId: currentOrganization.id,
           planCode: plan.planCode,
           email: currentOrganization.email,
+          amount: plan.price[billingPeriod], // Fallback amount if plan doesn't exist
         },
       });
 
