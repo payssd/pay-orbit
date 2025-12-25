@@ -189,7 +189,11 @@ export function PayrollForm({ open, onOpenChange, employees, onSubmit, isLoading
                       className="flex items-center gap-4 p-3 hover:bg-muted/50 cursor-pointer"
                       onClick={() => toggleEmployee(emp.id)}
                     >
-                      <Checkbox checked={selectedEmployees.has(emp.id)} onChange={() => {}} />
+                      <Checkbox 
+                        checked={selectedEmployees.has(emp.id)} 
+                        onCheckedChange={() => toggleEmployee(emp.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
                       <Avatar className="h-9 w-9">
                         <AvatarFallback className="bg-primary/10 text-primary text-sm">
                           {getInitials(emp.first_name, emp.last_name)}
