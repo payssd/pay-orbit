@@ -42,6 +42,7 @@ const navigation = [
   { name: 'Expense Budgets', href: '/expenses/budgets', icon: CreditCard },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Expense Reports', href: '/reports/expenses', icon: FileText },
+  { name: 'Expense Analytics', href: '/reports/analytics', icon: BarChart3 },
 ];
 
 const settingsNavigation = [
