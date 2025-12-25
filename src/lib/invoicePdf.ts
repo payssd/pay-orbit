@@ -16,9 +16,9 @@ export function generateInvoicePdf(invoice: InvoiceWithItems, organization: Orga
   let y = margin;
 
   const formatCurrency = (amount: number | null) => {
-    return new Intl.NumberFormat('en-KE', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: invoice.currency || 'KES',
+      currency: invoice.currency || 'USD',
       minimumFractionDigits: 2,
     }).format(amount || 0);
   };

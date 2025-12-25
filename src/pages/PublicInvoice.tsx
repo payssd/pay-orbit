@@ -115,9 +115,9 @@ export default function PublicInvoice() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-KE', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: data?.invoice?.currency || 'KES',
+      currency: data?.invoice?.currency || 'USD',
     }).format(amount || 0);
   };
 

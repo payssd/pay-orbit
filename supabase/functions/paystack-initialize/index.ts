@@ -9,7 +9,7 @@ interface InitializeRequest {
   organizationId: string;
   planCode?: string;
   email: string;
-  amount?: number; // Amount in base currency (e.g., KES)
+  amount?: number; // Amount in base currency (e.g., USD)
 }
 
 Deno.serve(async (req) => {

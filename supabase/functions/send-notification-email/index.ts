@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     let subject = '';
     let html = '';
-    const currency = data.currency || 'KES';
+    const currency = data.currency || 'USD';
 
     switch (type) {
       case 'invoice_reminder':

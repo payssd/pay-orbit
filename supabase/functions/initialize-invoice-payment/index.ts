@@ -106,7 +106,7 @@ serve(async (req: Request) => {
           email: invoice.customer_email || 'customer@example.com',
           amount: amountInKobo,
           reference,
-          currency: invoice.currency || 'KES',
+          currency: invoice.currency || 'USD',
           callback_url: callbackUrl || defaultCallback,
           metadata: {
             invoice_id: invoice.id,
@@ -141,7 +141,7 @@ serve(async (req: Request) => {
         body: JSON.stringify({
           tx_ref: reference,
           amount: balanceDue,
-          currency: invoice.currency || 'KES',
+          currency: invoice.currency || 'USD',
           redirect_url: callbackUrl || defaultCallback,
           customer: {
             email: invoice.customer_email || 'customer@example.com',
@@ -182,7 +182,7 @@ serve(async (req: Request) => {
         reference: paymentReference,
         provider,
         amount: balanceDue,
-        currency: invoice.currency || 'KES',
+        currency: invoice.currency || 'USD',
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

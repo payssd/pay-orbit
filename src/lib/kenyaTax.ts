@@ -113,9 +113,9 @@ export function calculateTax(grossPay: number, otherDeductions: number = 0): Tax
 }
 
 export function formatKES(amount: number): string {
-  return new Intl.NumberFormat('en-KE', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'KES',
+    currency: 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
