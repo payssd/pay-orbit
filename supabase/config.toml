@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.send-subscription-email]
 verify_jwt = false
+
+[functions.send-team-invitation]
+verify_jwt = true
+
+[functions.accept-invitation]
+verify_jwt = true
