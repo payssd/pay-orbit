@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          organization_id: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          organization_id: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -318,6 +365,50 @@ export type Database = {
           },
         ]
       }
+      invoice_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          gateway_response: Json | null
+          id: string
+          invoice_id: string
+          payment_date: string
+          payment_method: string
+          payment_reference: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          gateway_response?: Json | null
+          id?: string
+          invoice_id: string
+          payment_date?: string
+          payment_method: string
+          payment_reference?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          gateway_response?: Json | null
+          id?: string
+          invoice_id?: string
+          payment_date?: string
+          payment_method?: string
+          payment_reference?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount_paid: number | null
@@ -334,6 +425,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           organization_id: string
+          public_token: string | null
           status: string | null
           subtotal: number
           tax_amount: number | null
@@ -357,6 +449,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           organization_id: string
+          public_token?: string | null
           status?: string | null
           subtotal?: number
           tax_amount?: number | null
@@ -380,6 +473,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           organization_id?: string
+          public_token?: string | null
           status?: string | null
           subtotal?: number
           tax_amount?: number | null
