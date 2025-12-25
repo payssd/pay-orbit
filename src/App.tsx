@@ -20,6 +20,7 @@ import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
 import Expenses from "./pages/Expenses";
 import ExpenseReports from "./pages/ExpenseReports";
+import ExpenseBudgets from "./pages/ExpenseBudgets";
 import PaymentSettings from "./pages/PaymentSettings";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import TeamSettings from "./pages/TeamSettings";
@@ -67,6 +68,7 @@ const App = () => (
               
               {/* Expenses */}
               <Route path="/expenses" element={<Expenses />} />
+              <Route path="/expenses/budgets" element={<ExpenseBudgets />} />
               
               {/* Reports */}
               <Route path="/reports" element={<Reports />} />

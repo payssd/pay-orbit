@@ -39,6 +39,7 @@ const navigation = [
   { name: 'Customers', href: '/customers', icon: Building2 },
   { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Expenses', href: '/expenses', icon: Receipt },
+  { name: 'Expense Budgets', href: '/expenses/budgets', icon: CreditCard },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Expense Reports', href: '/reports/expenses', icon: FileText },
 ];
