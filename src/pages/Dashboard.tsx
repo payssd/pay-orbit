@@ -18,7 +18,15 @@ import {
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+// Brand-aligned chart colors
+const CHART_COLORS = [
+  'hsl(234 70% 42%)',  // Primary - Deep Indigo
+  'hsl(152 60% 40%)',  // Success - Emerald
+  'hsl(199 89% 48%)',  // Info - Cyan
+  'hsl(38 92% 50%)',   // Warning - Amber
+  'hsl(280 65% 50%)',  // Purple
+  'hsl(350 65% 55%)',  // Rose
+];
 
 export default function Dashboard() {
   const { profile, currentOrganization } = useAuth();
@@ -90,8 +98,8 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}!
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}
           </h1>
           <p className="text-muted-foreground">
             Here's what's happening with {currentOrganization?.name} today.
@@ -113,7 +121,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
           <Link key={stat.name} to={stat.href}>
-            <Card className="stat-card hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-card">
+            <Card className="card-hover cursor-pointer border shadow-card">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {stat.name}
@@ -123,7 +131,7 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-2xl font-semibold tabular-nums">{stat.value}</div>
                 <div className="flex items-center gap-1 mt-1">
                   {stat.changeType === 'increase' && (
                     <ArrowUpRight className="h-3 w-3 text-success" />
@@ -155,9 +163,9 @@ export default function Dashboard() {
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Revenue vs Expenses Chart */}
-        <Card className="border-0 shadow-card">
+        <Card className="border shadow-card">
           <CardHeader>
-            <CardTitle>Revenue vs Expenses</CardTitle>
+            <CardTitle className="text-lg">Revenue vs Expenses</CardTitle>
             <CardDescription>Last 6 months comparison</CardDescription>
           </CardHeader>
           <CardContent>
@@ -165,11 +173,11 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={stats.monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
+                  <XAxis dataKey="month" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis className="text-xs" tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                   <Tooltip 
                     formatter={(value: number) => [`KES ${value.toLocaleString()}`, '']}
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                   />
                   <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="expenses" name="Expenses" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
@@ -177,7 +185,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-[250px] text-center">
-                <TrendingUp className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <TrendingUp className="h-12 w-12 text-muted-foreground/30 mb-4" />
                 <p className="text-sm font-medium">No data yet</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Create invoices and record expenses to see trends
@@ -188,9 +196,9 @@ export default function Dashboard() {
         </Card>
 
         {/* Expenses by Category */}
-        <Card className="border-0 shadow-card">
+        <Card className="border shadow-card">
           <CardHeader>
-            <CardTitle>Expenses by Category</CardTitle>
+            <CardTitle className="text-lg">Expenses by Category</CardTitle>
             <CardDescription>This month's breakdown</CardDescription>
           </CardHeader>
           <CardContent>
@@ -209,18 +217,18 @@ export default function Dashboard() {
                     labelLine={false}
                   >
                     {stats.expensesByCategory.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
                     formatter={(value: number) => [`KES ${value.toLocaleString()}`, '']}
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-[250px] text-center">
-                <Receipt className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <Receipt className="h-12 w-12 text-muted-foreground/30 mb-4" />
                 <p className="text-sm font-medium">No expenses this month</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   <Link to="/expenses" className="text-primary hover:underline">
@@ -236,9 +244,9 @@ export default function Dashboard() {
       {/* Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Activity */}
-        <Card className="border-0 shadow-card">
+        <Card className="border shadow-card">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle className="text-lg">Recent Activity</CardTitle>
             <CardDescription>Latest actions in your organization</CardDescription>
           </CardHeader>
           <CardContent>
@@ -259,7 +267,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Clock className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <Clock className="h-12 w-12 text-muted-foreground/30 mb-4" />
                 <p className="text-sm font-medium">No recent activity</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Start by adding employees or creating invoices
@@ -270,9 +278,9 @@ export default function Dashboard() {
         </Card>
 
         {/* Quick Start Guide */}
-        <Card className="border-0 shadow-card">
+        <Card className="border shadow-card">
           <CardHeader>
-            <CardTitle>Getting Started</CardTitle>
+            <CardTitle className="text-lg">Getting Started</CardTitle>
             <CardDescription>Complete these steps to set up your workspace</CardDescription>
           </CardHeader>
           <CardContent>
@@ -286,7 +294,7 @@ export default function Dashboard() {
                 <Link
                   key={index}
                   to={step.href}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${

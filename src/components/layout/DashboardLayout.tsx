@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -26,7 +26,6 @@ import {
   Menu,
   LogOut,
   ChevronDown,
-  Sparkles,
   UserCircle,
   Wallet,
   Bell,
@@ -71,7 +70,7 @@ export function DashboardLayout() {
   const NavItems = ({ onItemClick }: { onItemClick?: () => void }) => (
     <>
       <div className="space-y-1">
-        <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+        <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Main
         </p>
         {navigation.map((item) => {
@@ -82,13 +81,13 @@ export function DashboardLayout() {
               to={item.href}
               onClick={onItemClick}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-md'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className="h-4 w-4" />
               {item.name}
             </NavLink>
           );
@@ -96,7 +95,7 @@ export function DashboardLayout() {
       </div>
 
       <div className="space-y-1 mt-6">
-        <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+        <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Settings
         </p>
         {settingsNavigation.map((item) => {
@@ -107,13 +106,13 @@ export function DashboardLayout() {
               to={item.href}
               onClick={onItemClick}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-md'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className="h-4 w-4" />
               {item.name}
             </NavLink>
           );
@@ -127,10 +126,12 @@ export function DashboardLayout() {
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r bg-card lg:flex">
         <div className="flex h-16 items-center gap-3 border-b px-6">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="text-lg font-bold">PayFlow Africa</span>
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Building2 className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-semibold">PayFlow</span>
+          </Link>
         </div>
 
         {/* Organization Switcher */}
@@ -183,7 +184,7 @@ export function DashboardLayout() {
         {/* Disclaimer & Legal */}
         <div className="p-4 border-t space-y-2">
           <p className="text-[10px] text-muted-foreground text-center leading-tight">
-            PayFlow Africa is a software tool. We never hold, process, or custody your funds.
+            PayFlow is a software tool. We never hold, process, or custody your funds.
           </p>
           <div className="flex justify-center gap-2 text-[10px]">
             <NavLink to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
@@ -208,9 +209,9 @@ export function DashboardLayout() {
           <SheetContent side="left" className="w-72 p-0">
             <div className="flex h-16 items-center gap-3 border-b px-6">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
+                <Building2 className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="text-lg font-bold">PayFlow Africa</span>
+              <span className="text-lg font-semibold">PayFlow</span>
             </div>
             <ScrollArea className="flex-1 px-4 py-4">
               <nav className="space-y-1">
@@ -220,12 +221,12 @@ export function DashboardLayout() {
           </SheetContent>
         </Sheet>
 
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
+            <Building2 className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-bold">PayFlow</span>
-        </div>
+          <span className="font-semibold">PayFlow</span>
+        </Link>
 
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" size="icon">
@@ -235,12 +236,11 @@ export function DashboardLayout() {
       </header>
 
       {/* Desktop Header */}
-      <header className="fixed inset-x-0 top-0 z-40 hidden h-16 items-center gap-4 border-b bg-card/80 backdrop-blur-xl px-6 lg:ml-64 lg:flex">
+      <header className="fixed inset-x-0 top-0 z-40 hidden h-16 items-center gap-4 border-b bg-card/95 backdrop-blur px-6 lg:ml-64 lg:flex">
         <div className="flex-1" />
         
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
         </Button>
 
         <DropdownMenu>

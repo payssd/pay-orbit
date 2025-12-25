@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Building2, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Loader2, Building2, ArrowRight, CheckCircle2, Shield } from 'lucide-react';
 
 const countries = [
   { code: 'KE', name: 'Kenya' },
@@ -81,19 +81,18 @@ export default function Onboarding() {
     }
 
     toast({
-      title: 'Organization created!',
-      description: 'Your workspace is ready. Let\'s get started!',
+      title: 'Organization created',
+      description: 'Your workspace is ready. Let\'s get started.',
     });
     
     navigate('/subscription');
   };
 
   const features = [
-    'Unlimited employees & customers',
-    'Automated payroll calculations',
+    'Accurate payroll calculations',
     'Professional invoice generation',
     'Payment gateway integration',
-    'Detailed reports & analytics',
+    'Clear reports and insights',
   ];
 
   return (
@@ -101,28 +100,28 @@ export default function Onboarding() {
       {/* Left side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-lg space-y-8 page-transition">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-primary-foreground" />
+              <Building2 className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold">PayFlow Africa</span>
-          </div>
+            <span className="text-xl font-semibold">PayFlow</span>
+          </Link>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold">Set up your organization</h1>
+            <h1 className="text-2xl font-semibold">Set up your organization</h1>
             <p className="text-muted-foreground">
-              Create your business workspace to start managing payroll and invoices.
+              Create your workspace to start managing payroll and invoices.
             </p>
           </div>
 
-          <Card className="border-0 shadow-card">
+          <Card className="border shadow-card">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-primary" />
-                Organization Details
+                Organization details
               </CardTitle>
               <CardDescription>
-                This information will be used on invoices and payslips
+                This information appears on invoices and payslips
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -196,29 +195,28 @@ export default function Onboarding() {
       </div>
 
       {/* Right side - Features */}
-      <div className="hidden lg:flex lg:w-1/2 animated-gradient p-12 flex-col justify-center relative overflow-hidden">
-        {/* Decorative elements */}
+      <div className="hidden lg:flex lg:w-1/2 brand-gradient p-12 flex-col justify-center relative overflow-hidden">
+        {/* Subtle decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
         </div>
 
         <div className="relative z-10 space-y-8">
           <div className="space-y-4">
-            <h2 className="text-3xl font-bold text-white">
+            <h2 className="text-2xl font-semibold text-white">
               Everything you need to run your business
             </h2>
-            <p className="text-lg text-white/70">
-              Get started with powerful tools for payroll, invoicing, and payment management.
+            <p className="text-base text-white/70 leading-relaxed">
+              Powerful tools for payroll, invoicing, and payment management—designed for African businesses.
             </p>
           </div>
 
-          <div className="space-y-4">
-            {features.map((feature, index) => (
+          <div className="space-y-3">
+            {features.map((feature) => (
               <div
                 key={feature}
                 className="flex items-center gap-3 bg-white/10 backdrop-blur px-5 py-4 rounded-xl"
-                style={{ animationDelay: `${index * 100}ms` }}
               >
                 <CheckCircle2 className="h-5 w-5 text-white flex-shrink-0" />
                 <span className="text-white font-medium">{feature}</span>
@@ -226,10 +224,9 @@ export default function Onboarding() {
             ))}
           </div>
 
-          <div className="pt-4">
-            <p className="text-white/50 text-sm">
-              We never hold, process, or touch your money. All payments flow through your connected gateways.
-            </p>
+          <div className="flex items-center gap-2 text-white/50 text-sm pt-4">
+            <Shield className="w-4 h-4" />
+            <span>We never hold, process, or touch your money.</span>
           </div>
         </div>
       </div>

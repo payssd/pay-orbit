@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock, User, Sparkles, ArrowRight } from 'lucide-react';
+import { Loader2, Mail, Lock, User, ArrowRight, Building2, Shield, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email address');
@@ -85,7 +85,7 @@ export default function Auth() {
     }
 
     toast({
-      title: 'Welcome back!',
+      title: 'Welcome back',
       description: 'You have successfully signed in.',
     });
   };
@@ -104,7 +104,6 @@ export default function Auth() {
     setIsLoading(false);
 
     if (error) {
-      // Handle specific errors
       if (error.message.includes('already registered')) {
         toast({
           title: 'Account exists',
@@ -122,8 +121,8 @@ export default function Auth() {
     }
 
     toast({
-      title: 'Account created!',
-      description: 'Welcome to PayFlow Africa. Let\'s set up your organization.',
+      title: 'Account created',
+      description: 'Welcome to PayFlow. Let\'s set up your organization.',
     });
     
     navigate('/onboarding');
@@ -148,53 +147,63 @@ export default function Auth() {
     }
 
     toast({
-      title: 'Magic link sent!',
+      title: 'Magic link sent',
       description: 'Check your email for the sign-in link.',
     });
   };
 
+  const trustPoints = [
+    'Your money stays with you',
+    'Bank-level encryption',
+    'Trusted by East African businesses',
+  ];
+
   return (
     <div className="min-h-screen flex">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 animated-gradient p-12 flex-col justify-between relative overflow-hidden">
-        {/* Decorative elements */}
+      <div className="hidden lg:flex lg:w-1/2 brand-gradient p-12 flex-col justify-between relative overflow-hidden">
+        {/* Subtle decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
         </div>
         
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">PayFlow Africa</span>
-          </div>
+            <span className="text-xl font-semibold text-white">PayFlow</span>
+          </Link>
         </div>
         
-        <div className="relative z-10 space-y-6">
-          <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
-            Payroll & Invoicing<br />
-            <span className="text-white/80">Made Simple</span>
-          </h1>
-          <p className="text-lg text-white/70 max-w-md">
-            The all-in-one platform for East African businesses to manage payroll, send invoices, and orchestrate payments—all without touching your money.
-          </p>
+        <div className="relative z-10 space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-3xl xl:text-4xl font-semibold text-white leading-tight">
+              Run payroll and payments<br />
+              <span className="text-white/80">with confidence</span>
+            </h1>
+            <p className="text-base text-white/70 max-w-md leading-relaxed">
+              Simple payroll and invoicing for East African businesses. 
+              Connect your payment gateways and stay in control.
+            </p>
+          </div>
           
-          <div className="flex flex-wrap gap-4 pt-4">
-            {['Payroll Management', 'Invoice Generation', 'Payment Orchestration'].map((feature) => (
-              <div key={feature} className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-white" />
-                <span className="text-sm text-white">{feature}</span>
+          <div className="space-y-3">
+            {trustPoints.map((point) => (
+              <div key={point} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                  <CheckCircle2 className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm text-white/90">{point}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative z-10">
-          <p className="text-white/50 text-sm">
-            Trusted by businesses across Kenya, Uganda, Tanzania, and Rwanda
-          </p>
+        <div className="relative z-10 flex items-center gap-2 text-white/50 text-sm">
+          <Shield className="w-4 h-4" />
+          <span>Secure by design. We never hold your funds.</span>
         </div>
       </div>
 
@@ -203,18 +212,20 @@ export default function Auth() {
         <div className="w-full max-w-md space-y-8 page-transition">
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold">PayFlow Africa</span>
+            <Link to="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-semibold">PayFlow</span>
+            </Link>
           </div>
 
           {showMagicLink ? (
-            <Card className="border-0 shadow-card">
+            <Card className="border shadow-card">
               <CardHeader className="text-center pb-2">
-                <CardTitle className="text-2xl">Passwordless Sign In</CardTitle>
+                <CardTitle className="text-2xl">Passwordless sign in</CardTitle>
                 <CardDescription>
-                  We'll send you a magic link to sign in instantly
+                  We'll send you a secure link to sign in
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -229,18 +240,18 @@ export default function Auth() {
                         placeholder="you@company.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 h-11"
                       />
                     </div>
                     {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-11" disabled={isLoading}>
                     {isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
-                        Send Magic Link
+                        Send magic link
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
@@ -265,7 +276,7 @@ export default function Auth() {
               </TabsList>
 
               <TabsContent value="signin">
-                <Card className="border-0 shadow-card">
+                <Card className="border shadow-card">
                   <CardHeader className="text-center pb-2">
                     <CardTitle className="text-2xl">Welcome back</CardTitle>
                     <CardDescription>
@@ -284,7 +295,7 @@ export default function Auth() {
                             placeholder="you@company.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 h-11"
                           />
                         </div>
                         {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
@@ -300,13 +311,13 @@ export default function Auth() {
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 h-11"
                           />
                         </div>
                         {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
                       </div>
 
-                      <Button type="submit" className="w-full" disabled={isLoading}>
+                      <Button type="submit" className="w-full h-11" disabled={isLoading}>
                         {isLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
@@ -329,11 +340,11 @@ export default function Auth() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full"
+                        className="w-full h-11"
                         onClick={() => setShowMagicLink(true)}
                       >
                         <Mail className="mr-2 h-4 w-4" />
-                        Sign in with Magic Link
+                        Sign in with magic link
                       </Button>
                     </form>
                   </CardContent>
@@ -341,11 +352,11 @@ export default function Auth() {
               </TabsContent>
 
               <TabsContent value="signup">
-                <Card className="border-0 shadow-card">
+                <Card className="border shadow-card">
                   <CardHeader className="text-center pb-2">
                     <CardTitle className="text-2xl">Create an account</CardTitle>
                     <CardDescription>
-                      Start managing your payroll and invoices today
+                      Start managing payroll and invoices
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -360,7 +371,7 @@ export default function Auth() {
                             placeholder="John Doe"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 h-11"
                           />
                         </div>
                         {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
@@ -376,7 +387,7 @@ export default function Auth() {
                             placeholder="you@company.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 h-11"
                           />
                         </div>
                         {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
@@ -392,7 +403,7 @@ export default function Auth() {
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 h-11"
                           />
                         </div>
                         {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
@@ -401,7 +412,7 @@ export default function Auth() {
                         </p>
                       </div>
 
-                      <Button type="submit" className="w-full" disabled={isLoading}>
+                      <Button type="submit" className="w-full h-11" disabled={isLoading}>
                         {isLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
@@ -414,13 +425,13 @@ export default function Auth() {
 
                       <p className="text-xs text-center text-muted-foreground">
                         By creating an account, you agree to our{' '}
-                        <a href="/legal/terms" className="text-primary hover:underline">
+                        <Link to="/terms" className="text-primary hover:underline">
                           Terms of Service
-                        </a>{' '}
+                        </Link>{' '}
                         and{' '}
-                        <a href="/legal/privacy" className="text-primary hover:underline">
+                        <Link to="/privacy" className="text-primary hover:underline">
                           Privacy Policy
-                        </a>
+                        </Link>
                       </p>
                     </form>
                   </CardContent>
