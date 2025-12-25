@@ -32,6 +32,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import PublicInvoice from "./pages/PublicInvoice";
 import InvoiceAging from "./pages/InvoiceAging";
+import SubscriptionManagement from "./pages/SubscriptionManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,7 +102,7 @@ const App = () => (
                 {/* Settings */}
                 <Route path="/settings/organization" element={<OrganizationSettings />} />
                 <Route path="/settings/gateways" element={<PaymentSettings />} />
-                <Route path="/settings/subscription" element={<Subscription />} />
+                <Route path="/settings/subscription" element={<SubscriptionManagement />} />
                 <Route path="/settings/team" element={<TeamSettings />} />
                 <Route path="/settings/profile" element={<ProfileSettings />} />
               </Route>
