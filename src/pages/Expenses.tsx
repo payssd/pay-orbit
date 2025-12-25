@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { Loader2, Plus, Receipt, Trash2, Pencil } from 'lucide-react';
+import { Loader2, Plus, Receipt, Trash2, Pencil, Upload, Image, X } from 'lucide-react';
 
 const categories = [
   'Office Supplies',
@@ -42,6 +42,7 @@ interface Expense {
   status: string;
   created_by: string;
   created_at: string;
+  receipt_url: string | null;
 }
 
 export default function Expenses() {
@@ -50,6 +51,11 @@ export default function Expenses() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -75,11 +81,54 @@ export default function Expenses() {
     enabled: !!currentOrganization,
   });
 
+  const uploadReceipt = async (file: File, expenseId: string): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${currentOrganization?.id}/${expenseId}.${fileExt}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('receipts')
+      .upload(fileName, file, { upsert: true });
+    
+    if (uploadError) throw uploadError;
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('receipts')
+      .getPublicUrl(fileName);
+    
+    return publicUrl;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({ title: 'Invalid file', description: 'Please upload an image file.', variant: 'destructive' });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: 'File too large', description: 'Please upload an image under 5MB.', variant: 'destructive' });
+        return;
+      }
+      setReceiptFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setReceiptPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearReceipt = () => {
+    setReceiptFile(null);
+    setReceiptPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       if (!currentOrganization || !user) throw new Error('Not authenticated');
       
-      const { error } = await supabase.from('expenses').insert({
+      setIsUploading(true);
+      
+      const { data: insertedExpense, error } = await supabase.from('expenses').insert({
         organization_id: currentOrganization.id,
         description: data.description,
         amount: parseFloat(data.amount),
@@ -88,9 +137,16 @@ export default function Expenses() {
         expense_date: data.expense_date,
         notes: data.notes || null,
         created_by: user.id,
-      });
+      }).select().single();
       
       if (error) throw error;
+      
+      if (receiptFile && insertedExpense) {
+        const receiptUrl = await uploadReceipt(receiptFile, insertedExpense.id);
+        await supabase.from('expenses')
+          .update({ receipt_url: receiptUrl })
+          .eq('id', insertedExpense.id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
@@ -101,10 +157,19 @@ export default function Expenses() {
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     },
+    onSettled: () => setIsUploading(false),
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      setIsUploading(true);
+      
+      let receiptUrl = editingExpense?.receipt_url || null;
+      
+      if (receiptFile) {
+        receiptUrl = await uploadReceipt(receiptFile, id);
+      }
+      
       const { error } = await supabase
         .from('expenses')
         .update({
@@ -114,6 +179,7 @@ export default function Expenses() {
           vendor: data.vendor || null,
           expense_date: data.expense_date,
           notes: data.notes || null,
+          receipt_url: receiptUrl,
         })
         .eq('id', id);
       
@@ -129,6 +195,7 @@ export default function Expenses() {
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     },
+    onSettled: () => setIsUploading(false),
   });
 
   const deleteMutation = useMutation({
@@ -154,6 +221,7 @@ export default function Expenses() {
       expense_date: format(new Date(), 'yyyy-MM-dd'),
       notes: '',
     });
+    clearReceipt();
   };
 
   const handleEdit = (expense: Expense) => {
@@ -166,6 +234,9 @@ export default function Expenses() {
       expense_date: expense.expense_date,
       notes: expense.notes || '',
     });
+    if (expense.receipt_url) {
+      setReceiptPreview(expense.receipt_url);
+    }
     setIsDialogOpen(true);
   };
 
@@ -295,12 +366,50 @@ export default function Expenses() {
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Receipt</Label>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                {receiptPreview ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={receiptPreview}
+                      alt="Receipt preview"
+                      className="h-24 w-24 object-cover rounded-md border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6"
+                      onClick={clearReceipt}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Receipt
+                  </Button>
+                )}
+              </div>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {(createMutation.isPending || updateMutation.isPending) && (
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending || isUploading}>
+                  {(createMutation.isPending || updateMutation.isPending || isUploading) && (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   )}
                   {editingExpense ? 'Update' : 'Add'} Expense
@@ -345,6 +454,7 @@ export default function Expenses() {
                   <TableHead>Description</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Vendor</TableHead>
+                  <TableHead>Receipt</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
@@ -363,6 +473,19 @@ export default function Expenses() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {expense.vendor || '-'}
+                    </TableCell>
+                    <TableCell>
+                      {expense.receipt_url ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setViewingReceipt(expense.receipt_url)}
+                        >
+                          <Image className="h-4 w-4 text-primary" />
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       KES {Number(expense.amount).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
@@ -401,6 +524,22 @@ export default function Expenses() {
           )}
         </CardContent>
       </Card>
+
+      {/* Receipt Viewer Dialog */}
+      <Dialog open={!!viewingReceipt} onOpenChange={() => setViewingReceipt(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Receipt</DialogTitle>
+          </DialogHeader>
+          {viewingReceipt && (
+            <img
+              src={viewingReceipt}
+              alt="Receipt"
+              className="w-full h-auto max-h-[70vh] object-contain rounded-md"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
