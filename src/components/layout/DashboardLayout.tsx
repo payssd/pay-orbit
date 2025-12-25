@@ -40,6 +40,7 @@ const navigation = [
   { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Expenses', href: '/expenses', icon: Receipt },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Expense Reports', href: '/reports/expenses', icon: FileText },
 ];
 
 const settingsNavigation = [
