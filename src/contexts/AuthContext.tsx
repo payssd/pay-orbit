@@ -267,41 +267,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { data: null, error: new Error('Not authenticated') };
     }
 
-    // Create organization
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .insert({
-        name: data.name,
-        email: data.email,
-        phone: data.phone || null,
-        country: data.country,
-      })
-      .select()
-      .single();
+    // NOTE: We intentionally avoid selecting the organization immediately after insert.
+    // The organizations SELECT policy requires the user to be an org member, which only
+    // happens after we insert into organization_members.
+    const orgId = crypto.randomUUID();
+
+    // Create organization (no RETURNING/SELECT)
+    const { error: orgError } = await supabase.from('organizations').insert({
+      id: orgId,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || null,
+      country: data.country,
+    });
 
     if (orgError) {
       return { data: null, error: orgError as Error };
     }
 
     // Add user as owner
-    const { error: memberError } = await supabase
-      .from('organization_members')
-      .insert({
-        organization_id: org.id,
-        user_id: user.id,
-        role: 'owner',
-      });
+    const { error: memberError } = await supabase.from('organization_members').insert({
+      organization_id: orgId,
+      user_id: user.id,
+      role: 'owner',
+    });
 
     if (memberError) {
-      // Rollback org creation
-      await supabase.from('organizations').delete().eq('id', org.id);
       return { data: null, error: memberError as Error };
+    }
+
+    // Fetch the org now that membership exists (SELECT policy will allow it)
+    const { data: org, error: fetchOrgError } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', orgId)
+      .maybeSingle();
+
+    if (fetchOrgError) {
+      return { data: null, error: fetchOrgError as Error };
     }
 
     // Refresh organizations
     await refreshOrganizations();
 
-    return { data: org as Organization, error: null };
+    return { data: (org as Organization | null) ?? null, error: null };
   };
 
   const value = {
