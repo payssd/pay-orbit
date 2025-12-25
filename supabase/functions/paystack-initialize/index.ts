@@ -29,24 +29,32 @@ Deno.serve(async (req) => {
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.error('No authorization header provided');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Authorization header required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    console.log('Creating Supabase client with URL:', supabaseUrl);
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log('Auth result - user:', user?.id, 'error:', userError?.message);
+    
     if (userError || !user) {
-      console.error('Auth error:', userError);
+      console.error('Auth validation failed:', userError?.message || 'No user returned');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Invalid or expired session. Please log in again.' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
