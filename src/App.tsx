@@ -9,6 +9,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Pages
+import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Subscription from "./pages/Subscription";
@@ -53,6 +54,7 @@ const App = () => (
           <AuthProvider>
             <Routes>
               {/* Public routes */}
+              <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
@@ -106,9 +108,6 @@ const App = () => (
                 <Route path="/settings/team" element={<TeamSettings />} />
                 <Route path="/settings/profile" element={<ProfileSettings />} />
               </Route>
-              
-              {/* Redirect root to dashboard or auth */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
