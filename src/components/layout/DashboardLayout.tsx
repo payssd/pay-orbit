@@ -30,6 +30,7 @@ import {
   UserCircle,
   Wallet,
   Bell,
+  Clock,
 } from 'lucide-react';
 
 const navigation = [
@@ -41,8 +42,8 @@ const navigation = [
   { name: 'Expenses', href: '/expenses', icon: Receipt },
   { name: 'Expense Budgets', href: '/expenses/budgets', icon: CreditCard },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Invoice Aging', href: '/reports/aging', icon: Clock },
   { name: 'Expense Reports', href: '/reports/expenses', icon: FileText },
-  { name: 'Expense Analytics', href: '/reports/analytics', icon: BarChart3 },
 ];
 
 const settingsNavigation = [
@@ -179,11 +180,20 @@ export function DashboardLayout() {
           </nav>
         </ScrollArea>
 
-        {/* Disclaimer */}
-        <div className="p-4 border-t">
+        {/* Disclaimer & Legal */}
+        <div className="p-4 border-t space-y-2">
           <p className="text-[10px] text-muted-foreground text-center leading-tight">
             PayFlow Africa is a software tool. We never hold, process, or custody your funds.
           </p>
+          <div className="flex justify-center gap-2 text-[10px]">
+            <NavLink to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
+              Terms
+            </NavLink>
+            <span className="text-muted-foreground">·</span>
+            <NavLink to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+              Privacy
+            </NavLink>
+          </div>
         </div>
       </aside>
 
