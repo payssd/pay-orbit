@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.get-public-invoice]
 verify_jwt = false
+
+[functions.save-gateway-config]
+verify_jwt = true

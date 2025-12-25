@@ -588,6 +588,53 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_configs: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          is_live_mode: boolean
+          organization_id: string
+          provider: string
+          public_key: string | null
+          secret_key_hint: string | null
+          updated_at: string
+          webhook_secret_hint: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          is_live_mode?: boolean
+          organization_id: string
+          provider: string
+          public_key?: string | null
+          secret_key_hint?: string | null
+          updated_at?: string
+          webhook_secret_hint?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          is_live_mode?: boolean
+          organization_id?: string
+          provider?: string
+          public_key?: string | null
+          secret_key_hint?: string | null
+          updated_at?: string
+          webhook_secret_hint?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateway_configs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_settings: {
         Row: {
           bank_account_name: string | null
