@@ -8,6 +8,7 @@ import { PaymentGatewaysSection } from '@/components/landing/PaymentGatewaysSect
 import { WhyChooseUsSection } from '@/components/landing/WhyChooseUsSection';
 import { SecuritySection } from '@/components/landing/SecuritySection';
 import { PricingSection } from '@/components/landing/PricingSection';
+import { FAQSection } from '@/components/landing/FAQSection';
 import { FinalCTASection } from '@/components/landing/FinalCTASection';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 
@@ -29,6 +30,7 @@ const Index = () => {
           <SecuritySection />
         </section>
         <PricingSection />
+        <FAQSection />
         <FinalCTASection />
       </main>
       <LandingFooter />
