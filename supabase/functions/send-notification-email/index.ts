@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'invoice_reminder' | 'payroll_notification' | 'payment_received';
+  type: 'invoice_reminder' | 'payroll_notification' | 'payment_received' | 'expense_approved' | 'expense_rejected' | 'expense_submitted';
   to: string;
   data: {
     recipientName?: string;
@@ -19,6 +19,9 @@ interface NotificationRequest {
     payrollPeriod?: string;
     organizationName?: string;
     currency?: string;
+    expenseDescription?: string;
+    expenseCategory?: string;
+    rejectionReason?: string;
   };
 }
 
@@ -76,6 +79,62 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Dear ${data.recipientName || 'Customer'},</p>
             <p>Thank you! We have received your payment of <strong>${currency} ${data.amount?.toLocaleString()}</strong> for Invoice <strong>${data.invoiceNumber}</strong>.</p>
             <p>Thank you for your business!</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+            <p style="color: #666; font-size: 12px;">${data.organizationName}</p>
+          </div>
+        `;
+        break;
+
+      case 'expense_submitted':
+        subject = `New Expense Submitted for Approval`;
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #3b82f6;">New Expense Submitted</h2>
+            <p>A new expense has been submitted for approval:</p>
+            <ul style="list-style: none; padding: 0;">
+              <li><strong>Description:</strong> ${data.expenseDescription}</li>
+              <li><strong>Category:</strong> ${data.expenseCategory}</li>
+              <li><strong>Amount:</strong> ${currency} ${data.amount?.toLocaleString()}</li>
+            </ul>
+            <p>Please review and approve or reject this expense.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+            <p style="color: #666; font-size: 12px;">${data.organizationName}</p>
+          </div>
+        `;
+        break;
+
+      case 'expense_approved':
+        subject = `Expense Approved: ${data.expenseDescription}`;
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #22c55e;">Expense Approved</h2>
+            <p>Dear ${data.recipientName || 'Team Member'},</p>
+            <p>Your expense has been approved:</p>
+            <ul style="list-style: none; padding: 0;">
+              <li><strong>Description:</strong> ${data.expenseDescription}</li>
+              <li><strong>Category:</strong> ${data.expenseCategory}</li>
+              <li><strong>Amount:</strong> ${currency} ${data.amount?.toLocaleString()}</li>
+            </ul>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+            <p style="color: #666; font-size: 12px;">${data.organizationName}</p>
+          </div>
+        `;
+        break;
+
+      case 'expense_rejected':
+        subject = `Expense Rejected: ${data.expenseDescription}`;
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #ef4444;">Expense Rejected</h2>
+            <p>Dear ${data.recipientName || 'Team Member'},</p>
+            <p>Your expense has been rejected:</p>
+            <ul style="list-style: none; padding: 0;">
+              <li><strong>Description:</strong> ${data.expenseDescription}</li>
+              <li><strong>Category:</strong> ${data.expenseCategory}</li>
+              <li><strong>Amount:</strong> ${currency} ${data.amount?.toLocaleString()}</li>
+              ${data.rejectionReason ? `<li><strong>Reason:</strong> ${data.rejectionReason}</li>` : ''}
+            </ul>
+            <p>Please contact your manager if you have questions.</p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
             <p style="color: #666; font-size: 12px;">${data.organizationName}</p>
           </div>

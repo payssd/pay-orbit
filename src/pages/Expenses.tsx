@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { Loader2, Plus, Receipt, Trash2, Pencil, Upload, Image, X } from 'lucide-react';
+import { Loader2, Plus, Receipt, Trash2, Pencil, Upload, Image, X, Check, XCircle, Clock } from 'lucide-react';
 
 const categories = [
   'Office Supplies',
@@ -46,7 +46,7 @@ interface Expense {
 }
 
 export default function Expenses() {
-  const { currentOrganization, user } = useAuth();
+  const { currentOrganization, user, currentMembership } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -55,6 +55,10 @@ export default function Expenses() {
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectingExpense, setRejectingExpense] = useState<Expense | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     description: '',
@@ -212,6 +216,71 @@ export default function Expenses() {
     },
   });
 
+  const canApprove = currentMembership?.role === 'owner' || currentMembership?.role === 'admin';
+
+  const approvalMutation = useMutation({
+    mutationFn: async ({ expenseId, status, reason }: { expenseId: string; status: 'approved' | 'rejected'; reason?: string }) => {
+      // Get expense first
+      const { data: expense, error: fetchError } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('id', expenseId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Get submitter profile
+      const { data: submitterProfile } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('user_id', expense.created_by)
+        .maybeSingle();
+
+      const { error } = await supabase
+        .from('expenses')
+        .update({ status })
+        .eq('id', expenseId);
+
+      if (error) throw error;
+
+      // Send notification email
+      if (submitterProfile?.email) {
+        try {
+          await supabase.functions.invoke('send-notification-email', {
+            body: {
+              type: status === 'approved' ? 'expense_approved' : 'expense_rejected',
+              to: submitterProfile.email,
+              data: {
+                recipientName: submitterProfile.full_name,
+                expenseDescription: expense.description,
+                expenseCategory: expense.category,
+                amount: expense.amount,
+                currency: expense.currency,
+                organizationName: currentOrganization?.name,
+                rejectionReason: reason,
+              },
+            },
+          });
+        } catch (emailError) {
+          console.error('Failed to send notification email:', emailError);
+        }
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({
+        title: variables.status === 'approved' ? 'Expense Approved' : 'Expense Rejected',
+        description: `The expense has been ${variables.status}.`,
+      });
+      setRejectDialogOpen(false);
+      setRejectingExpense(null);
+      setRejectionReason('');
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       description: '',
@@ -254,7 +323,43 @@ export default function Expenses() {
     }
   };
 
-  const totalExpenses = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+  const handleApprove = (expense: Expense) => {
+    approvalMutation.mutate({ expenseId: expense.id, status: 'approved' });
+  };
+
+  const handleReject = () => {
+    if (rejectingExpense) {
+      approvalMutation.mutate({
+        expenseId: rejectingExpense.id,
+        status: 'rejected',
+        reason: rejectionReason,
+      });
+    }
+  };
+
+  const openRejectDialog = (expense: Expense) => {
+    setRejectingExpense(expense);
+    setRejectionReason('');
+    setRejectDialogOpen(true);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800"><Check className="h-3 w-3 mr-1" />Approved</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-100 text-red-800"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
+      default:
+        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+    }
+  };
+
+  const filteredExpenses = expenses?.filter(e => 
+    statusFilter === 'all' ? true : e.status === statusFilter
+  );
+
+  const totalExpenses = filteredExpenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+  const pendingCount = expenses?.filter(e => e.status === 'pending').length || 0;
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -420,24 +525,57 @@ export default function Expenses() {
         </Dialog>
       </div>
 
-      {/* Summary Card */}
-      <Card className="border-0 shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-primary" />
-            Total Expenses
-          </CardTitle>
-          <CardDescription>All recorded expenses</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold">
-            KES {totalExpenses.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            {expenses?.length || 0} expense{expenses?.length !== 1 ? 's' : ''} recorded
-          </p>
-        </CardContent>
-      </Card>
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-0 shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Receipt className="h-4 w-4 text-primary" />
+              Total Expenses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              KES {totalExpenses.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {filteredExpenses?.length || 0} expense{filteredExpenses?.length !== 1 ? 's' : ''}
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-0 shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock className="h-4 w-4 text-yellow-600" />
+              Pending Approval
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">Awaiting review</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Filter by Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Expenses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Expenses Table */}
       <Card className="border-0 shadow-card">
@@ -446,34 +584,37 @@ export default function Expenses() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : expenses && expenses.length > 0 ? (
+          ) : filteredExpenses && filteredExpenses.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Vendor</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Receipt</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead className="w-[150px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {expenses.map((expense) => (
+                {filteredExpenses.map((expense) => (
                   <TableRow key={expense.id}>
                     <TableCell className="whitespace-nowrap">
                       {format(new Date(expense.expense_date), 'MMM d, yyyy')}
                     </TableCell>
-                    <TableCell className="font-medium">{expense.description}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{expense.description}</div>
+                      {expense.vendor && (
+                        <div className="text-xs text-muted-foreground">{expense.vendor}</div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className={getCategoryColor(expense.category)}>
                         {expense.category}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {expense.vendor || '-'}
-                    </TableCell>
+                    <TableCell>{getStatusBadge(expense.status)}</TableCell>
                     <TableCell>
                       {expense.receipt_url ? (
                         <Button
@@ -492,6 +633,28 @@ export default function Expenses() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
+                        {canApprove && expense.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleApprove(expense)}
+                              disabled={approvalMutation.isPending}
+                              title="Approve"
+                            >
+                              <Check className="h-4 w-4 text-green-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openRejectDialog(expense)}
+                              disabled={approvalMutation.isPending}
+                              title="Reject"
+                            >
+                              <XCircle className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -516,9 +679,9 @@ export default function Expenses() {
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Receipt className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <p className="text-sm font-medium">No expenses recorded</p>
+              <p className="text-sm font-medium">No expenses found</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Start tracking your business expenses
+                {statusFilter !== 'all' ? 'Try changing the filter' : 'Start tracking your business expenses'}
               </p>
             </div>
           )}
@@ -538,6 +701,48 @@ export default function Expenses() {
               className="w-full h-auto max-h-[70vh] object-contain rounded-md"
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Expense</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this expense.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Expense</Label>
+              <p className="text-sm text-muted-foreground">
+                {rejectingExpense?.description} - KES {rejectingExpense?.amount.toLocaleString()}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Reason (optional)</Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="Why is this expense being rejected?"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleReject}
+                disabled={approvalMutation.isPending}
+              >
+                {approvalMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Reject Expense
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
