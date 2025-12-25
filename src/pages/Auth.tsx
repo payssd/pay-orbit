@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,18 @@ export default function Auth() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
 
   const from = (location.state as any)?.from?.pathname || '/dashboard';
+
+  useEffect(() => {
+    const message = localStorage.getItem('authSessionError');
+    if (!message) return;
+
+    localStorage.removeItem('authSessionError');
+    toast({
+      title: 'Session expired',
+      description: message,
+      variant: 'destructive',
+    });
+  }, [toast]);
 
   // If already logged in, redirect
   if (user) {
