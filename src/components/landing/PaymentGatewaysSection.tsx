@@ -4,47 +4,41 @@ export function PaymentGatewaysSection() {
     { name: 'Flutterwave', description: 'Pan-African payments' },
     { name: 'Pesapal', description: 'Multi-channel payments' },
     { name: 'M-Pesa', description: 'Mobile money' },
-    { name: 'Bank Transfer', description: 'Direct bank deposits' },
+    { name: 'Bank Transfer', description: 'Direct deposits' },
   ];
 
   return (
-    <section className="py-24 bg-gradient-to-b from-muted/30 to-background relative overflow-hidden">
-      {/* Decorative gradient */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-primary/5 to-transparent rounded-full blur-3xl" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-warning/10 text-warning text-sm font-medium mb-4">
-            Payment Partners
-          </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            Use the payment providers you already trust
+    <section className="py-20 bg-muted/30">
+      <div className="container mx-auto px-4">
+        <div className="max-w-3xl mx-auto text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            Use payment providers you already trust
           </h2>
           <p className="text-lg text-muted-foreground">
-            We integrate with leading African payment providers. No new accounts. No forced switches.
+            Connect your existing accounts. No new signups. No forced switches.
           </p>
         </div>
 
-        {/* Gateway logos/cards */}
-        <div className="flex flex-wrap justify-center gap-6 max-w-4xl mx-auto">
+        {/* Gateway cards */}
+        <div className="flex flex-wrap justify-center gap-4 max-w-3xl mx-auto">
           {gateways.map((gateway, index) => (
             <div
               key={index}
-              className="group bg-card rounded-2xl px-8 py-6 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 min-w-[180px] text-center"
+              className="bg-card rounded-lg px-6 py-4 border border-border text-center min-w-[160px]"
             >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <span className="text-xl font-bold text-primary">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                <span className="text-lg font-medium text-foreground">
                   {gateway.name.charAt(0)}
                 </span>
               </div>
-              <h3 className="font-semibold text-foreground mb-1">{gateway.name}</h3>
-              <p className="text-sm text-muted-foreground">{gateway.description}</p>
+              <h3 className="font-medium text-foreground text-sm">{gateway.name}</h3>
+              <p className="text-xs text-muted-foreground">{gateway.description}</p>
             </div>
           ))}
         </div>
 
-        <p className="text-center text-muted-foreground mt-10 max-w-xl mx-auto">
-          Your customers pay through your existing accounts. We never touch your money — it goes directly to you.
+        <p className="text-center text-muted-foreground mt-8 text-sm max-w-md mx-auto">
+          Your customers pay through your existing accounts. Money goes directly to you.
         </p>
       </div>
     </section>
