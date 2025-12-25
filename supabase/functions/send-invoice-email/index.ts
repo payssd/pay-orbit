@@ -24,8 +24,8 @@ interface InvoiceItem {
   amount: number;
 }
 
-const formatCurrency = (amount: number, currency: string = 'KES') => {
-  return new Intl.NumberFormat('en-KE', {
+const formatCurrency = (amount: number, currency: string = 'USD') => {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
@@ -84,7 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const invoiceItems: InvoiceItem[] = items || [];
-    const currency = invoice.currency || 'KES';
+    const currency = invoice.currency || 'USD';
 
     // Build items HTML
     const itemsHtml = invoiceItems.map((item) => `

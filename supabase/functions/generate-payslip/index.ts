@@ -128,9 +128,9 @@ function generatePayslipHtml(data: {
   const { organization, employee, payrollRun, payrollItem } = data;
   
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-KE", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: payrollRun.currency || "KES",
+      currency: payrollRun.currency || "USD",
     }).format(amount || 0);
   };
 

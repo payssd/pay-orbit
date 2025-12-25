@@ -61,9 +61,9 @@ export function EmployeeList({ employees, isLoading, onAddNew, onEdit, onDelete 
 
   const formatSalary = (salary: number | null) => {
     if (!salary) return '-';
-    return new Intl.NumberFormat('en-KE', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'KES',
+      currency: 'USD',
       minimumFractionDigits: 0,
     }).format(salary);
   };

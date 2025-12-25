@@ -15,8 +15,8 @@ const plans = [
     id: 'starter',
     name: 'Starter',
     description: 'Perfect for small businesses just getting started',
-    price: { monthly: 2500, yearly: 25000 },
-    currency: 'KES',
+    price: { monthly: 10, yearly: 100 },
+    currency: 'USD',
     icon: Zap,
     planCode: 'PLN_04faggvrzaef1nv',
     features: [
@@ -32,8 +32,8 @@ const plans = [
     id: 'growth',
     name: 'Growth',
     description: 'For growing businesses that need more power',
-    price: { monthly: 7500, yearly: 75000 },
-    currency: 'KES',
+    price: { monthly: 20, yearly: 200 },
+    currency: 'USD',
     icon: Sparkles,
     planCode: 'PLN_h812vb0ofzt1n20',
     features: [
@@ -52,7 +52,7 @@ const plans = [
     name: 'Pro',
     description: 'For enterprises with advanced needs',
     price: { monthly: 0, yearly: 0 },
-    currency: 'KES',
+    currency: 'USD',
     icon: Crown,
     planCode: null, // Custom pricing - contact sales
     features: [
@@ -177,9 +177,9 @@ export default function Subscription() {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-KE', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'KES',
+      currency: 'USD',
       minimumFractionDigits: 0,
     }).format(price);
   };
