@@ -33,6 +33,7 @@ import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import PublicInvoice from "./pages/PublicInvoice";
+import AcceptInvitation from "./pages/AcceptInvitation";
 import InvoiceAging from "./pages/InvoiceAging";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/invoice/:token" element={<PublicInvoice />} />
+              <Route path="/accept-invitation" element={<AcceptInvitation />} />
               
               {/* Semi-protected routes (need auth but not org) */}
               <Route path="/onboarding" element={<Onboarding />} />
