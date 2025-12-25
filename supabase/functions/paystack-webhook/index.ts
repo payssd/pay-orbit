@@ -115,27 +115,58 @@ Deno.serve(async (req) => {
 
       case 'charge.success': {
         // Payment successful - could be subscription renewal
-        const { reference, metadata, plan } = event.data;
+        const { reference, metadata, plan, amount, currency } = event.data;
         const organizationId = metadata?.organization_id;
 
         console.log('Processing charge.success, reference:', reference, 'org:', organizationId);
 
-        if (organizationId && plan) {
-          // This is a subscription payment, update the organization
-          const { error: updateError } = await supabase
-            .from('organizations')
-            .update({
-              subscription_status: 'active',
-              subscription_ends_at: event.data.paid_at 
-                ? new Date(new Date(event.data.paid_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                : null,
-            })
-            .eq('id', organizationId);
+        if (organizationId) {
+          // Determine plan name from plan code or metadata
+          let planName = 'Unknown';
+          if (plan?.name) {
+            planName = plan.name;
+          } else if (metadata?.plan) {
+            planName = metadata.plan;
+          }
 
-          if (updateError) {
-            console.error('Failed to update organization after charge:', updateError);
+          // Insert payment record
+          const { error: paymentError } = await supabase
+            .from('subscription_payments')
+            .insert({
+              organization_id: organizationId,
+              amount: amount / 100, // Paystack sends amount in kobo/cents
+              currency: currency || 'USD',
+              status: 'completed',
+              payment_reference: reference,
+              paystack_reference: reference,
+              plan_name: planName,
+              payment_method: event.data.channel || 'card',
+              billing_period: 'monthly',
+            });
+
+          if (paymentError) {
+            console.error('Failed to insert payment record:', paymentError);
           } else {
-            console.log('Updated subscription after successful charge for org:', organizationId);
+            console.log('Recorded payment for org:', organizationId);
+          }
+
+          // Update organization subscription status if this is a plan payment
+          if (plan) {
+            const { error: updateError } = await supabase
+              .from('organizations')
+              .update({
+                subscription_status: 'active',
+                subscription_ends_at: event.data.paid_at 
+                  ? new Date(new Date(event.data.paid_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                  : null,
+              })
+              .eq('id', organizationId);
+
+            if (updateError) {
+              console.error('Failed to update organization after charge:', updateError);
+            } else {
+              console.log('Updated subscription after successful charge for org:', organizationId);
+            }
           }
         }
         break;
