@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Check, 
   Sparkles, 
@@ -15,6 +16,8 @@ import {
   AlertTriangle,
   CreditCard,
   ArrowUpRight,
+  Receipt,
+  Download,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -29,6 +32,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const plans = [
   {
@@ -102,6 +114,24 @@ export default function SubscriptionManagement() {
   const isActive = currentOrganization?.subscription_status === 'active';
   const isTrialing = currentOrganization?.subscription_status === 'trialing';
   const isPastDue = currentOrganization?.subscription_status === 'past_due';
+
+  // Fetch billing history
+  const { data: billingHistory, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ['billing-history', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id) return [];
+      const { data, error } = await supabase
+        .from('subscription_payments')
+        .select('*')
+        .eq('organization_id', currentOrganization.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentOrganization?.id,
+  });
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -323,6 +353,79 @@ export default function SubscriptionManagement() {
             </AlertDialog>
           </CardFooter>
         )}
+      </Card>
+
+      {/* Billing History */}
+      <Card className="border-0 shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            Billing History
+          </CardTitle>
+          <CardDescription>Your recent subscription payments</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingHistory ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between py-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          ) : billingHistory && billingHistory.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Reference</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {billingHistory.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell className="font-medium">
+                      {format(new Date(payment.created_at), 'MMM d, yyyy')}
+                    </TableCell>
+                    <TableCell>
+                      <span className="capitalize">{payment.plan_name || 'Subscription'}</span>
+                      {payment.billing_period && (
+                        <span className="text-muted-foreground text-xs ml-1">
+                          ({payment.billing_period})
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {formatPrice(payment.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={payment.status === 'completed' ? 'default' : 'secondary'}
+                        className={payment.status === 'completed' ? 'bg-success/10 text-success border-success/20' : ''}
+                      >
+                        {payment.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                      {payment.payment_reference?.slice(0, 12)}...
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Receipt className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p>No billing history yet</p>
+              <p className="text-xs mt-1">Your payments will appear here once you subscribe</p>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* Available Plans */}

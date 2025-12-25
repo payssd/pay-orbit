@@ -870,6 +870,56 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_payments: {
+        Row: {
+          amount: number
+          billing_period: string | null
+          created_at: string
+          currency: string
+          id: string
+          organization_id: string
+          payment_method: string | null
+          payment_reference: string | null
+          paystack_reference: string | null
+          plan_name: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          billing_period?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          organization_id: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          paystack_reference?: string | null
+          plan_name?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          billing_period?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          organization_id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          paystack_reference?: string | null
+          plan_name?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
