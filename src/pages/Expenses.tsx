@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,9 +11,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
-import { Loader2, Plus, Receipt, Trash2, Pencil, Upload, Image, X, Check, XCircle, Clock } from 'lucide-react';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { Loader2, Plus, Receipt, Trash2, Pencil, Upload, Image, X, Check, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+interface Budget {
+  id: string;
+  category: string;
+  monthly_limit: number;
+  alert_threshold: number;
+}
 
 const categories = [
   'Office Supplies',
@@ -84,6 +94,68 @@ export default function Expenses() {
     },
     enabled: !!currentOrganization,
   });
+
+  // Fetch budgets
+  const { data: budgets } = useQuery({
+    queryKey: ['expense-budgets', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization) return [];
+      const { data, error } = await supabase
+        .from('expense_budgets')
+        .select('*')
+        .eq('organization_id', currentOrganization.id);
+      
+      if (error) throw error;
+      return data as Budget[];
+    },
+    enabled: !!currentOrganization,
+  });
+
+  // Calculate monthly spending by category
+  const monthlySpending = useMemo(() => {
+    if (!expenses) return {};
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    
+    const spending: Record<string, number> = {};
+    expenses
+      .filter(e => {
+        const date = new Date(e.expense_date);
+        return date >= monthStart && date <= monthEnd && (e.status === 'pending' || e.status === 'approved');
+      })
+      .forEach(e => {
+        spending[e.category] = (spending[e.category] || 0) + Number(e.amount);
+      });
+    return spending;
+  }, [expenses]);
+
+  // Get budget alerts
+  const budgetAlerts = useMemo(() => {
+    if (!budgets) return [];
+    return budgets
+      .map(budget => {
+        const spent = monthlySpending[budget.category] || 0;
+        const percentage = (spent / budget.monthly_limit) * 100;
+        const isOver = percentage >= 100;
+        const isWarning = percentage >= budget.alert_threshold && !isOver;
+        return { ...budget, spent, percentage, isOver, isWarning };
+      })
+      .filter(b => b.isOver || b.isWarning)
+      .sort((a, b) => b.percentage - a.percentage);
+  }, [budgets, monthlySpending]);
+
+  // Get budget info for selected category in form
+  const selectedCategoryBudget = useMemo(() => {
+    if (!formData.category || !budgets) return null;
+    const budget = budgets.find(b => b.category === formData.category);
+    if (!budget) return null;
+    const spent = monthlySpending[formData.category] || 0;
+    const newAmount = parseFloat(formData.amount) || 0;
+    const projectedSpent = spent + newAmount;
+    const percentage = (projectedSpent / budget.monthly_limit) * 100;
+    return { budget, spent, projectedSpent, percentage };
+  }, [formData.category, formData.amount, budgets, monthlySpending]);
 
   const uploadReceipt = async (file: File, expenseId: string): Promise<string | null> => {
     const fileExt = file.name.split('.').pop();
@@ -379,6 +451,34 @@ export default function Expenses() {
 
   return (
     <div className="space-y-6 page-transition">
+      {/* Budget Alerts */}
+      {budgetAlerts.length > 0 && (
+        <Alert className="border-yellow-500 bg-yellow-50">
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="ml-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-yellow-800">Budget Alerts</p>
+                <p className="text-sm text-yellow-700">
+                  {budgetAlerts.filter(b => b.isOver).length > 0 && (
+                    <span className="text-destructive font-medium">
+                      {budgetAlerts.filter(b => b.isOver).length} over budget
+                    </span>
+                  )}
+                  {budgetAlerts.filter(b => b.isOver).length > 0 && budgetAlerts.filter(b => b.isWarning).length > 0 && ', '}
+                  {budgetAlerts.filter(b => b.isWarning).length > 0 && (
+                    <span>{budgetAlerts.filter(b => b.isWarning).length} approaching limit</span>
+                  )}
+                </p>
+              </div>
+              <Link to="/expenses/budgets">
+                <Button variant="outline" size="sm">View Budgets</Button>
+              </Link>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Expenses</h1>
@@ -462,6 +562,27 @@ export default function Expenses() {
                   />
                 </div>
               </div>
+              {/* Budget Warning */}
+              {selectedCategoryBudget && (
+                <Alert className={selectedCategoryBudget.percentage >= 100 ? 'border-destructive' : selectedCategoryBudget.percentage >= selectedCategoryBudget.budget.alert_threshold ? 'border-yellow-500' : 'border-green-500'}>
+                  <AlertTriangle className={`h-4 w-4 ${selectedCategoryBudget.percentage >= 100 ? 'text-destructive' : selectedCategoryBudget.percentage >= selectedCategoryBudget.budget.alert_threshold ? 'text-yellow-600' : 'text-green-600'}`} />
+                  <AlertDescription className="ml-2">
+                    <div className="space-y-2">
+                      <p className="text-sm">
+                        <strong>{formData.category}</strong> budget: KES {selectedCategoryBudget.budget.monthly_limit.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Current: KES {selectedCategoryBudget.spent.toLocaleString()} | 
+                        After this: KES {selectedCategoryBudget.projectedSpent.toLocaleString()} ({selectedCategoryBudget.percentage.toFixed(0)}%)
+                      </p>
+                      <Progress value={Math.min(selectedCategoryBudget.percentage, 100)} className="h-2" />
+                      {selectedCategoryBudget.percentage >= 100 && (
+                        <p className="text-xs text-destructive font-medium">This will exceed the budget!</p>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea

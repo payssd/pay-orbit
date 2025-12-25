@@ -183,6 +183,44 @@ export type Database = {
           },
         ]
       }
+      expense_budgets: {
+        Row: {
+          alert_threshold: number
+          category: string
+          created_at: string
+          id: string
+          monthly_limit: number
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          alert_threshold?: number
+          category: string
+          created_at?: string
+          id?: string
+          monthly_limit: number
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          alert_threshold?: number
+          category?: string
+          created_at?: string
+          id?: string
+          monthly_limit?: number
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_budgets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
