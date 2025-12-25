@@ -34,6 +34,7 @@ import {
   Sun,
   Moon,
 } from 'lucide-react';
+import { TrialCountdown } from '@/components/trial/TrialCountdown';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -313,6 +314,10 @@ export function DashboardLayout() {
       {/* Main Content */}
       <main className="lg:pl-64 pt-16">
         <div className="p-4 lg:p-8">
+          {/* Trial Countdown Banner */}
+          <div className="mb-6">
+            <TrialCountdown />
+          </div>
           <Outlet />
         </div>
       </main>
