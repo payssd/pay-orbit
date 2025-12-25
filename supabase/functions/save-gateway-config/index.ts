@@ -25,9 +25,12 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
+    console.log("Starting save-gateway-config function");
+    
     // Get user token from header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.error("No authorization header provided");
       return new Response(
         JSON.stringify({ error: "Authorization required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -41,16 +44,22 @@ serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) {
+      console.error("Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Invalid authentication" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log("User authenticated:", user.id);
+
     const body: GatewayConfigRequest = await req.json();
     const { organizationId, provider, publicKey, secretKey, webhookSecret, isEnabled, isLiveMode } = body;
 
+    console.log("Request body:", { organizationId, provider, isEnabled, isLiveMode });
+
     if (!organizationId || !provider) {
+      console.error("Missing required fields");
       return new Response(
         JSON.stringify({ error: "organizationId and provider are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -61,12 +70,23 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Verify user has permission (owner or admin)
-    const { data: roleData } = await supabase.rpc('get_org_role', {
+    const { data: roleData, error: roleError } = await supabase.rpc('get_org_role', {
       _user_id: user.id,
       _org_id: organizationId,
     });
+    
+    console.log("Role check result:", { roleData, roleError });
+
+    if (roleError) {
+      console.error("Error checking role:", roleError);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify permissions" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!roleData || !['owner', 'admin'].includes(roleData)) {
+      console.error("Permission denied for role:", roleData);
       return new Response(
         JSON.stringify({ error: "Permission denied" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -77,8 +97,10 @@ serve(async (req: Request) => {
     const secretKeyHint = secretKey ? `****${secretKey.slice(-4)}` : null;
     const webhookSecretHint = webhookSecret ? `****${webhookSecret.slice(-4)}` : null;
 
+    console.log("Upserting gateway config...");
+
     // Upsert gateway config (public data only)
-    const { error: upsertError } = await supabase
+    const { data: upsertData, error: upsertError } = await supabase
       .from('payment_gateway_configs')
       .upsert({
         organization_id: organizationId,
@@ -90,7 +112,10 @@ serve(async (req: Request) => {
         webhook_secret_hint: webhookSecretHint,
       }, {
         onConflict: 'organization_id,provider',
-      });
+      })
+      .select();
+
+    console.log("Upsert result:", { upsertData, upsertError });
 
     if (upsertError) {
       console.error("Error saving gateway config:", upsertError);
