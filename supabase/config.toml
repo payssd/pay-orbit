@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.send-invoice-email]
 verify_jwt = true
+
+[functions.send-notification-email]
+verify_jwt = true
+
+[functions.generate-payslip]
+verify_jwt = true
+
+[functions.get-public-invoice]
+verify_jwt = false
