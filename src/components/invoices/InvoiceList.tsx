@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Search, Plus, MoreHorizontal, Eye, Trash2, FileText, Loader2, Send, CheckCircle, Download, Mail } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Eye, Trash2, FileText, Loader2, Send, CheckCircle, Download, Mail, Link2, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 import type { Invoice, InvoiceWithItems } from '@/hooks/useInvoices';
 
 interface InvoiceListProps {
@@ -22,6 +23,7 @@ interface InvoiceListProps {
 }
 
 export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, onUpdateStatus, onDownloadPdf, onSendEmail }: InvoiceListProps) {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -60,6 +62,29 @@ export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, o
     } finally {
       setSendingEmailId(null);
     }
+  };
+
+  const handleCopyPaymentLink = async (invoice: Invoice) => {
+    if (!invoice.public_token) {
+      toast({ title: 'Error', description: 'Invoice does not have a public link', variant: 'destructive' });
+      return;
+    }
+    const paymentUrl = `${window.location.origin}/invoice/${invoice.public_token}`;
+    try {
+      await navigator.clipboard.writeText(paymentUrl);
+      toast({ title: 'Copied!', description: 'Payment link copied to clipboard' });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to copy link', variant: 'destructive' });
+    }
+  };
+
+  const handleOpenPaymentLink = (invoice: Invoice) => {
+    if (!invoice.public_token) {
+      toast({ title: 'Error', description: 'Invoice does not have a public link', variant: 'destructive' });
+      return;
+    }
+    const paymentUrl = `${window.location.origin}/invoice/${invoice.public_token}`;
+    window.open(paymentUrl, '_blank');
   };
 
   const formatCurrency = (amount: number | null) => {
@@ -194,6 +219,19 @@ export function InvoiceList({ invoices, isLoading, onAddNew, onView, onDelete, o
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
+                            {invoice.public_token && invoice.status !== 'paid' && (
+                              <>
+                                <DropdownMenuItem onClick={() => handleCopyPaymentLink(invoice)}>
+                                  <Link2 className="h-4 w-4 mr-2" />
+                                  Copy Payment Link
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenPaymentLink(invoice)}>
+                                  <ExternalLink className="h-4 w-4 mr-2" />
+                                  Open Payment Page
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
+                            )}
                             {invoice.status === 'draft' && (
                               <DropdownMenuItem onClick={() => onUpdateStatus(invoice.id, 'sent')}>
                                 <Send className="h-4 w-4 mr-2" />
