@@ -129,6 +129,42 @@ Deno.serve(async (req) => {
       } else {
         console.log('Payment recorded in billing history');
       }
+
+      // Send activation email notification
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('name, email')
+        .eq('id', organizationId)
+        .single();
+
+      if (orgData?.email) {
+        const nextBillingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        try {
+          await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-subscription-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+            },
+            body: JSON.stringify({
+              email: orgData.email,
+              organizationName: orgData.name,
+              type: 'activated',
+              planName: subscriptionPlan ? subscriptionPlan.charAt(0).toUpperCase() + subscriptionPlan.slice(1) : 'Subscription',
+              amount: amount / 100,
+              nextBillingDate,
+            }),
+          });
+          console.log('Activation email sent');
+        } catch (emailError) {
+          console.error('Failed to send activation email:', emailError);
+        }
+      }
     }
 
     return new Response(

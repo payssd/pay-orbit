@@ -210,6 +210,19 @@ export default function SubscriptionManagement() {
 
       if (error) throw error;
 
+      // Send cancellation email
+      try {
+        await supabase.functions.invoke('send-subscription-email', {
+          body: {
+            email: currentOrganization.email,
+            organizationName: currentOrganization.name,
+            type: 'cancelled',
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send cancellation email:', emailError);
+      }
+
       await refreshOrganizations();
 
       toast({
