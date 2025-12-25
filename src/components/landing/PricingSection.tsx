@@ -7,7 +7,7 @@ const plans = [
     name: 'Starter',
     price: '$10',
     period: '/month',
-    description: 'Perfect for small businesses',
+    description: 'For small teams',
     icon: Zap,
     features: [
       'Up to 10 employees',
@@ -49,16 +49,10 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section className="py-24 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-background to-muted/30" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-warning/10 text-warning text-sm font-medium mb-4">
-            Pricing
-          </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="max-w-3xl mx-auto text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-semibold text-foreground mb-4">
             Simple, transparent pricing
           </h2>
           <p className="text-lg text-muted-foreground">
@@ -66,34 +60,34 @@ export function PricingSection() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-10">
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative bg-card rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${
+              className={`relative bg-card rounded-lg border overflow-hidden ${
                 plan.popular 
-                  ? 'border-primary shadow-lg shadow-primary/10' 
-                  : 'border-border/50'
+                  ? 'border-primary' 
+                  : 'border-border'
               }`}
             >
               {plan.popular && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent" />
+                <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
               )}
               
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                  <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
                     Most Popular
                   </span>
                 </div>
               )}
 
               <div className="p-6 pt-8">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <plan.icon className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-4">
+                  <plan.icon className="w-5 h-5 text-muted-foreground" />
                 </div>
                 
-                <h3 className="text-xl font-bold text-foreground mb-1">
+                <h3 className="text-lg font-medium text-foreground mb-1">
                   {plan.name}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -101,11 +95,11 @@ export function PricingSection() {
                 </p>
                 
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground">{plan.period}</span>
+                  <span className="text-3xl font-semibold text-foreground tabular-nums">{plan.price}</span>
+                  <span className="text-muted-foreground text-sm">{plan.period}</span>
                 </div>
 
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-2 mb-6">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
@@ -133,7 +127,7 @@ export function PricingSection() {
         <div className="text-center">
           <Button asChild variant="link" className="text-primary">
             <Link to="/subscription">
-              View full pricing details
+              View full pricing
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

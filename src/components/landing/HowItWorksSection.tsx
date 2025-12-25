@@ -2,70 +2,60 @@ import { UserPlus, Link2, BarChart3 } from 'lucide-react';
 
 const steps = [
   {
-    number: '01',
+    number: '1',
     icon: UserPlus,
-    title: 'Subscribe to the platform',
-    description: 'Choose a plan and activate your account in minutes. No lengthy onboarding or paperwork required.',
-    color: 'primary'
+    title: 'Subscribe',
+    description: 'Choose a plan and activate your account. No lengthy onboarding required.'
   },
   {
-    number: '02',
+    number: '2',
     icon: Link2,
-    title: 'Connect your payment gateways',
-    description: 'Use Paystack, Flutterwave, Pesapal, M-Pesa, or bank transfers. Your existing accounts work seamlessly.',
-    color: 'accent'
+    title: 'Connect your gateways',
+    description: 'Use Paystack, Flutterwave, M-Pesa, or bank transfers. Your existing accounts work.'
   },
   {
-    number: '03',
+    number: '3',
     icon: BarChart3,
-    title: 'Run payroll & collect payments',
-    description: 'Pay employees, send invoices, and track payments — all from one beautiful dashboard.',
-    color: 'success'
+    title: 'Run payroll & collect',
+    description: 'Pay employees, send invoices, and track payments from one dashboard.'
   },
 ];
 
 export function HowItWorksSection() {
   return (
-    <section className="py-24 bg-muted/30 relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-1/2 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2" />
-      <div className="absolute top-1/2 right-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl -translate-y-1/2" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
-            How It Works
-          </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            Get started in 3 simple steps
+    <section className="py-20 bg-muted/30">
+      <div className="container mx-auto px-4">
+        <div className="max-w-3xl mx-auto text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            Get started in three steps
           </h2>
           <p className="text-lg text-muted-foreground">
             From signup to your first payroll run in under 10 minutes.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {steps.map((step, index) => (
             <div key={index} className="relative">
               {/* Connector line */}
               {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-border to-transparent z-0" />
+                <div className="hidden md:block absolute top-12 left-full w-full h-px bg-border z-0" style={{ width: 'calc(100% - 3rem)', left: 'calc(50% + 1.5rem)' }} />
               )}
               
-              <div className="relative bg-card rounded-2xl p-8 border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-2 group">
+              <div className="relative bg-card rounded-lg p-6 border border-border text-center">
                 {/* Step number */}
-                <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold text-lg shadow-lg">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium mx-auto mb-4">
                   {step.number}
                 </div>
                 
-                <div className={`w-16 h-16 rounded-2xl bg-${step.color}/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <step.icon className={`w-8 h-8 text-${step.color}`} />
+                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center mx-auto mb-4">
+                  <step.icon className="w-6 h-6 text-muted-foreground" />
                 </div>
                 
-                <h3 className="text-xl font-bold text-foreground mb-3">
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   {step.title}
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {step.description}
                 </p>
               </div>
