@@ -169,6 +169,11 @@
 }
 
 @layer components {
+  /* Brand gradient - Deep Indigo */
+  .brand-gradient {
+    background: linear-gradient(135deg, hsl(234 62% 38%) 0%, hsl(234 50% 28%) 100%);
+  }
+
   /* Gradient text utility */
   .text-gradient {
     @apply bg-clip-text text-transparent;
@@ -179,6 +184,15 @@
   .glass-card {
     @apply bg-card border border-border;
     box-shadow: var(--shadow-card);
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+
+  .card-hover:hover {
+    @apply shadow-md -translate-y-0.5;
   }
 
   /* Subtle focus ring */
