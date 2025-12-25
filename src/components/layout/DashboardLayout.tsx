@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -30,6 +31,8 @@ import {
   Wallet,
   Bell,
   Clock,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 const navigation = [
@@ -54,6 +57,7 @@ const settingsNavigation = [
 
 export function DashboardLayout() {
   const { user, profile, currentOrganization, organizations, setCurrentOrganization, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -229,6 +233,15 @@ export function DashboardLayout() {
         </Link>
 
         <div className="ml-auto flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          </Button>
           <Button variant="ghost" size="icon">
             <Bell className="h-5 w-5" />
           </Button>
@@ -239,6 +252,16 @@ export function DashboardLayout() {
       <header className="fixed inset-x-0 top-0 z-40 hidden h-16 items-center gap-4 border-b bg-card/95 backdrop-blur px-6 lg:ml-64 lg:flex">
         <div className="flex-1" />
         
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </Button>
+
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
         </Button>
