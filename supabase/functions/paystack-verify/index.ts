@@ -74,10 +74,21 @@ Deno.serve(async (req) => {
 
       // Determine plan from metadata or plan object
       const planCode = metadata?.plan_code || plan?.plan_code || '';
-      let subscriptionPlan = null;
-      if (planCode.toLowerCase().includes('starter')) subscriptionPlan = 'starter';
-      else if (planCode.toLowerCase().includes('growth')) subscriptionPlan = 'growth';
-      else if (planCode.toLowerCase().includes('pro')) subscriptionPlan = 'pro';
+      
+      // Map Paystack plan codes to subscription plans
+      const planCodeMapping: Record<string, string> = {
+        'PLN_04faggvrzaef1nv': 'starter',
+        'PLN_h812vb0ofzt1n20': 'growth',
+      };
+      
+      let subscriptionPlan = planCodeMapping[planCode] || null;
+      
+      // Fallback: check if plan name contains keywords
+      if (!subscriptionPlan && planCode) {
+        if (planCode.toLowerCase().includes('starter')) subscriptionPlan = 'starter';
+        else if (planCode.toLowerCase().includes('growth')) subscriptionPlan = 'growth';
+        else if (planCode.toLowerCase().includes('pro')) subscriptionPlan = 'pro';
+      }
 
       console.log('Updating organization:', organizationId, 'with plan:', subscriptionPlan);
 
