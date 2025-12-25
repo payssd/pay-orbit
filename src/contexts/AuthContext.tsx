@@ -135,6 +135,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // If the refresh token is invalid/missing, Supabase will fail to refresh and we must reset local auth.
+        if ((event as unknown as string) === 'TOKEN_REFRESH_FAILED') {
+          console.warn('Auth token refresh failed; signing out to recover.');
+          localStorage.setItem('authSessionError', 'Your session expired. Please sign in again.');
+          // Best-effort sign out (also clears local storage)
+          supabase.auth.signOut();
+
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setOrganizations([]);
+          setCurrentOrganization(null);
+          setCurrentMembership(null);
+          setIsLoading(false);
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
 
